@@ -17,17 +17,28 @@ class Tsugi {
     }
 
     /**
-     * Optionally handle launch and/or set up the LTI session and global variables
+     * Optionally handle launch and/or set up the LTI session variables
      *
-     * This will set up as much of the $USER, $CONTEXT, $LINK,
-     * and $RESULT data as it can including leaving them all null
+     * This will set up as much of the user, context, link,
+     * and result data as it can including leaving them all null
      * if this is called on a request with no LTI launch and no LTI
-     * data in the session.  This functions as and performs a
-     * PHP session_start().
+     * data in the session.  This expects req.session to be properly
+     * set up as it may read and / or write session data.  If this 
+     * encounters a LTI launch (POST) it might redirect and indicate
+     * that this request is now complete.
+     * 
+     * Calling sequence:
+     * 
+     *     launch = tsugi.setup(CFG, req, res);
+     *     if (launch.complete) return;
+     *
+     * @param {ConfigSample} CFG A Tsugi Configuration object
+     * @param {http.ClientRequest} req 
+     * @param {http.ServerResponse} res 
      *
      * @return Launch A Tsugi Launch object.
      */
-    session_start(CFG) {
+    setup(CFG, req, res) {
         return this.requireData(CFG, this.NONE);
     }
 
