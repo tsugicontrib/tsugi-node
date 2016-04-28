@@ -14,7 +14,7 @@ class Tsugi {
      * die is there if no session_name() (PHPSESSID) cookie or
      * parameter.  No need to create any fresh sessions here.
      *
-     * @param {Config} A Tsugi Configuration object
+     * @param {Config} CFG A Tsugi Configuration object
      *
      * @param {string} needed Indicates which of
      * the data structures are needed. If this is omitted,
