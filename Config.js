@@ -1,7 +1,10 @@
         
 // Lets encrypt some things
 var CryptoJS = require("crypto-js");
-const GLOBAL_LONG_CONFIG_KEY = "bob";
+// This is not super-secure - just enough to keep plaintext
+// passwords from showing up in the console.log() output
+// Feel free to improve on this or set it to a long constant.
+const GLOBAL_LONG_CONFIG_KEY = (new Date().toString())+(new Date().getTime())+(Math.random().toString());
 
 function encrypt(v) {
     if ( v === false ) return false;
