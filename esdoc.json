@@ -3,10 +3,6 @@
   "destination": "./esdoc",
   "plugins": [
     {"name": "./plugin.js", 
-     "note": "https://github.com/esdoc/esdoc/issues/168"},
-    { "name": "esdoc-node-plugin", "option": {
-      "base": ".",
-      "devDependencies": false
-    }}
+     "note": "https://github.com/esdoc/esdoc/issues/168"}
   ]
 }
