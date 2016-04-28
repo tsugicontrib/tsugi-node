@@ -1,0 +1,23 @@
+{
+  "name": "es6",
+  "version": "1.0.0",
+  "dependencies": {},
+  "description": "A Sample Tsugi Application in Node",
+  "main": "http.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/csev/tsugi-node-sample.git"
+  },
+  "author": "Charles R Severance",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/csev/tsugi-node-sample/issues"
+  },
+  "homepage": "https://github.com/csev/tsugi-node-sample#readme",
+  "devDependencies": {
+    "esdoc-node-plugin": "^0.2.1"
+  }
+}
