@@ -1,0 +1,5 @@
+
+Non-Cookie Session
+
+https://github.com/ethanresnick/session-cookieless
+
