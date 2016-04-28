@@ -35,7 +35,7 @@ function sha256(v) {
  * Config.js, change the class name at the beginning and the
  * last line, and edit all the values to set your configuration.
  */
-class Config {
+class ConfigSample {
 
     constructor() {
 
@@ -90,7 +90,7 @@ class Config {
          * features of this application. (encrypted)
          * @type {string}
          */
-        this._adminpw = 'short';
+        this.adminpw = 'short';
 
         /**
          * When this is true it enables a Developer test harness that can launch
@@ -197,4 +197,4 @@ class Config {
     get mailsecret() { return decrypt(this._mailsecret); }
 }
     
-module.exports = Config;
+module.exports = ConfigSample;
