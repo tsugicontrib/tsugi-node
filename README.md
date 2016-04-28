@@ -3,7 +3,7 @@ Tsugi Node Library
 
 This is a Tsugi Node library Hack space.  We are using ES6 and NodeJS 6.0.
 
-At this point it is mostly jsut exploring the OO model where we need to work
+At this point it is mostly just exploring the OO model where we need to work
 with all of these simultaneously:
 
 * ES6
