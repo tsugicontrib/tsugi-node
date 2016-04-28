@@ -7,12 +7,15 @@ let Entity = require('./Entity');
 
 class User extends Entity {
 
-    constructor(v) {
+    /**
+     * @param {number} id
+     */
+    constructor(id) {
         super();
         /**
          * @type {number}
          */
-        this.id = v;
+        this.id = id;
         this.TABLE_NAME = "lti_user";
         this.PRIMARY_KEY = "user_id";
     }
