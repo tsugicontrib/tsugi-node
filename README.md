@@ -10,6 +10,10 @@ with all of these simultaneously:
 * NodeJS require pattern 
 * esdoc
 
+Of course do this after downloading:
+
+    npm install
+
 To run test code:
 
     node test.js
