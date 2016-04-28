@@ -5,6 +5,7 @@ var Tsugi = require('./src/Tsugi');
 var CFG = new Config();
 var tsugi = new Tsugi();
 
+console.log("dbpass");
 console.log(CFG.dbpass);
 console.log(Tsugi);
 console.log(tsugi);

@@ -1,39 +1,26 @@
         
 // Lets encrypt some things
-const crypto = require('crypto');
-const GLOBAL_LONG_CONFIG_KEY = crypto.randomBytes(256).toString('hex');
+var CryptoJS = require("crypto-js");
+const GLOBAL_LONG_CONFIG_KEY = "bob";
 
 function encrypt(v) {
     if ( v === false ) return false;
     if ( v === null ) return null;
-    let cipher = crypto.createCipher('aes192', GLOBAL_LONG_CONFIG_KEY);
-    let encrypted = cipher.update(v, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    return encrypted;
+    let encrypted = CryptoJS.AES.encrypt(v.toString(),GLOBAL_LONG_CONFIG_KEY);
+    return encrypted.toString();
 }
 
 function decrypt(v) {
     if ( v === false ) return false;
     if ( v === null ) return null;
-    let decipher = crypto.createDecipher('aes192', GLOBAL_LONG_CONFIG_KEY);
-    var decrypted = decipher.update(v, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-}
-
-function sha256(v) {
-    if ( v === false ) return false;
-    if ( v === null ) return null;
-    let hash = crypto.createHash('sha256');
-    var hashed = hash.update(v, 'hex', 'utf8');
-    hashed += hash.final('utf-8');
-    return hashed;
+    let decrypted = CryptoJS.AES.decrypt(v,GLOBAL_LONG_CONFIG_KEY);
+    return decrypted.toString(CryptoJS.enc.Utf8);
 }
 
 /**
  * This is a sample of the configuration file.  Copy this to 
- * Config.js, change the class name at the beginning and the
- * last line, and edit all the values to set your configuration.
+ * Config.js in the top directory and edit all the values to 
+ * set your Tsugi configuration.
  */
 class Config {
 
@@ -46,7 +33,7 @@ class Config {
         this.wwwroot = 'http://localhost/tsugi';  /// For normal
         // this.wwwroot = 'http://localhost:8888/tsugi';   // For MAMP
         
-        /*
+        /**
          * Database connection information to configure the PDO connection
          * You need to point this at a database with am account and password
          * that can create tables.   To make the initial tables go into Admin
@@ -70,7 +57,7 @@ class Config {
          * light production.
          * If you check out a copy of the static content locally and do not
          * want to use the CDN copy (perhaps you are on a plane or are otherwise
-         * not connected) change this configuration as show.
+         * not connected) change this configuration.
          */
          this.staticroot = 'https://www.dr-chuck.net/tsugi-static';
          // this.staticroot = this.wwwroot . "/../tsugi-static";
@@ -100,17 +87,8 @@ class Config {
         this.DEVELOPER = true;
         
         /**
-         * These values configure the cookie used to record the overall
-         * login in a long-lived encrypted cookie.   Look at the library
-         * code createSecureCookie() for more detail on how these operate.
-         * @type {string}
-         */
-        this._cookiesecret = encrypt('warning:please-change-cookie-secret-a289b543');
-        this.cookiename = 'TSUGIAUTO';
-        this.cookiepad = '390b246ea9';
-        
-        /**
-         * Where the bulk mail comes from - should be a real address with a wildcard box you check
+         * Where the bulk mail comes from - should be a real address with 
+         * a wildcard box you check
          */
         this.maildomain = false; // 'mail.example.com';
         /**
@@ -146,6 +124,7 @@ class Config {
         // Universal Analytics
         this.universal_analytics = false; // "UA-57880800-1";
         
+        // TODO: Make this work in Node - lots of fun
         // Only define this if you are using Tsugi in single standalone app that 
         // will never be in iframes - because most browsers will *not* set cookies in
         // cross-domain iframes.   If you use this, you cannot be a different
@@ -181,14 +160,6 @@ class Config {
      * @type {string}
      */
     get adminpw() { return decrypt(this._adminpw); }
-
-    /**
-     * These values configure the cookie used to record the overall
-     * login in a long-lived encrypted cookie.   Look at the library
-     * code createSecureCookie() for more detail on how these operate.
-     * @type {string}
-     */
-    get cookiesecret() { return decrypt(this._cookiesecret); }
 
     /**
      * The mail secret (encrypted)

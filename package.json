@@ -1,7 +1,9 @@
 {
   "name": "tsugi-node",
   "version": "0.0.1",
-  "dependencies": {},
+  "dependencies": {
+    "crypto-js" : ">=3.0.0"
+  },
   "description": "Tsugi Node Library",
   "main": "http.js",
   "scripts": {
