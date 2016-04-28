@@ -1,7 +1,10 @@
         
 // Lets encrypt some things
 var CryptoJS = require("crypto-js");
-const GLOBAL_LONG_CONFIG_KEY = "bob";
+// This is not super-secure - just enough to keep plaintext
+// passwords from showing up in the console.log() output
+// Feel free to improve on this or set it to a long constant.
+const GLOBAL_LONG_CONFIG_KEY = (new Date().toString())+(new Date().getTime())+(Math.random().toString());
 
 function encrypt(v) {
     if ( v === false ) return false;
@@ -73,20 +76,6 @@ class Config {
         this.dbprefix  = '';
         
         /**
-         * This is the PW that you need to access the Administration
-         * features of this application. (encrypted)
-         * @type {string}
-         */
-        this._adminpw = encrypt('short');
-
-        /**
-         * When this is true it enables a Developer test harness that can launch
-         * tools using LTI.  It allows quick testing without setting up an LMS
-         * course, etc.
-         */
-        this.DEVELOPER = true;
-        
-        /**
          * Where the bulk mail comes from - should be a real address with 
          * a wildcard box you check
          */
@@ -153,13 +142,6 @@ class Config {
      * @type {string}
      */
     get dbpass() { return decrypt(this._dbpass); }
-
-    /**
-     * This is the PW that you need to access the Administration
-     * features of this application. (encrypted)
-     * @type {string}
-     */
-    get adminpw() { return decrypt(this._adminpw); }
 
     /**
      * The mail secret (encrypted)
