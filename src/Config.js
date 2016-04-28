@@ -77,7 +77,7 @@ class Config {
          * features of this application. (encrypted)
          * @type {string}
          */
-        this._adminpw = 'short';
+        this._adminpw = encrypt('short');
 
         /**
          * When this is true it enables a Developer test harness that can launch
