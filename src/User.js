@@ -9,6 +9,9 @@ class User extends Entity {
 
     constructor(v) {
         super();
+        /**
+         * @type {number}
+         */
         this.id = v;
         this.TABLE_NAME = "lti_user";
         this.PRIMARY_KEY = "user_id";

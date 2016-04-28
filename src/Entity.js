@@ -11,14 +11,17 @@ class Entity {
     constructor() {
         /**
          * Implementing classes must override this variable in their constructor
+         * @type {string}
          */
         this.TABLE_NAME = null; // "lti_result";
         /**
          * Implementing classes must override this variable in their constructor
+         * @type {string}
          */
         this.PRIMARY_KEY = null; // "result_id";
         /**
          * Implementing classes must override this variable in their constructor
+         * @type {number}
          */
         this.id = null;
     }
