@@ -24,6 +24,14 @@ function decrypt(v) {
  * This is a sample of the configuration file.  Copy this to 
  * Config.js in the top directory and edit all the values to 
  * set your Tsugi configuration.
+ *
+ *  Calling sequence in a NodeJS app:
+ *
+ *      var CFG = require('./Config');
+ *      var Tsugi = require('./src/Tsugi');
+ *
+ *      launch = Tsugi.requireData(CFG, Tsugi.ALL);
+ *      if ( launch.complete ) return;
  */
 class Config {
 
@@ -150,4 +158,4 @@ class Config {
     get mailsecret() { return decrypt(this._mailsecret); }
 }
     
-module.exports = Config;
+module.exports = new Config();

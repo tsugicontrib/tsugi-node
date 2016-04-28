@@ -1,6 +1,14 @@
 
 /**
  *  The Tsugi class/namespace/Utilities
+ * 
+ *  Calling sequence in a NodeJS app:
+ *
+ *      var CFG = require('./Config');
+ *      var Tsugi = require('./src/Tsugi');
+ *
+ *      launch = Tsugi.requireData(CFG, Tsugi.ALL);
+ *      if ( launch.complete ) return;
  */
 class Tsugi {
 
@@ -76,5 +84,5 @@ class Tsugi {
 
 }
 
-module.exports = Tsugi;
+module.exports = new Tsugi();
 

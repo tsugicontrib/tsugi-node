@@ -1,15 +1,11 @@
 
-var Config = require('./Config'); 
+var CFG = require('./Config'); 
 var Tsugi = require('./src/Tsugi');
-
-var CFG = new Config();
-var tsugi = new Tsugi();
 
 console.log(CFG.dbpass);
 console.log(Tsugi);
-console.log(tsugi);
-// launch = tsugi.requireData(CFG, tsugi.ALL);
-launch = tsugi.requireData(CFG);
+// launch = Tsugi.requireData(CFG, Tsugi.ALL);
+launch = Tsugi.requireData(CFG);
 console.log(launch);
 console.log(launch.user.id);
 
