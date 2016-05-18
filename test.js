@@ -1,6 +1,7 @@
 
 // var CFG = require('./Config'); 
 var CFG = require('./src/Config'); 
+var PDOX = require('./src/PDOX'); 
 var Tsugi = require('./src/Tsugi');
 
 console.log(CFG.dbpass);
@@ -10,18 +11,39 @@ launch = Tsugi.requireData(CFG);
 console.log(launch);
 console.log(launch.user.id);
 
-var thekey = '12345';
+let thekey = '12345';
+/*
 CFG.cop.then( function(connection) {
         let sql = 'SELECT * FROM lti_key WHERE key_key = :key_key';
         connection.query(sql, { key_key: thekey }, function(err, rows, fields) {
             if (err) {
                 console.log('Could not load data query', sql);
             } else {
-                console.log('test success');
+                console.log(sql);
+                console.log("Rows:",rows.length);
             }
             connection.release();
         });
 });
+*/
+
+let sql = 'SELECT * FROM lti_key WHERE key_key = :key_key';
+CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
+         console.log("Rows:",rows.length);
+     }, function(reason) { console.log("Bummer",reason); } 
+);
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
+
+p1 = CFG.pdox.allRowsDie(sql,{ key_key: thekey });
+p2 = CFG.pdox.allRowsDie(sql,{ key_key: thekey });
+p3 = CFG.pdox.allRowsDie(sql,{ key_key: thekey });
+
+Promise.all([p1,p2,p3]).then(function(values) {
+    console.log("Promise.all done");
+}, function(reason) {
+    console.log("Bummer",reason);
+} );
 
 /*
 

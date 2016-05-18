@@ -1,6 +1,6 @@
         
 var Crypto = require("./Crypto");
-var Connection = require("./Connection");
+var PDOX = require("./PDOX");
 var Q = require("q");
 
 /**
@@ -20,7 +20,6 @@ class Config {
 
     constructor() {
 
-console.log("YADA");
         /**
          * This is the URL where the software is hosted
          * Do not add a trailing slash to this string
@@ -121,56 +120,7 @@ console.log("YADA");
          */
         this.OFFLINE = false;
 
-        // Make the database connection and pool once at the beginning
-        this.pool = null;
-        this.connection = null;
-        var mysql = require('mysql');
-        var connection = mysql.createConnection({
-            host     : this.dbhost,
-            port     : this.dbport,
-            database : this.dbname,
-            user     : this.dbuser,
-            password : this.dbpass
-        });
-        connection.connect();
-
-        // Test to see if the connection is alive
-        Connection.setupFormat(connection);
-        Connection.testConnection(connection);
-
-        /**
-         * A MySql Connection
-         * https://www.npmjs.com/package/mysql
-         */
-        this.connection = connection;
-
-        // Also create a MySql pool
-        var pool  = mysql.createPool({
-            host     : this.dbhost,
-            port     : this.dbport,
-            database : this.dbname,
-            // TODO: Pool parameters
-            user     : this.dbuser,
-            password : this.dbpass
-        });
-
-        // Test the pool (async)
-        Connection.testPool(pool);
-
-        /**
-         * A MySql Pool - does not yes suport the :title syntax
-         * https://www.npmjs.com/package/mysql
-         */
-        this.pool = pool;
-        // TODO: Make this handle the :title syntax
-
-        // Test for the existence of the data tables
-        let cop = this.cop;  // Get a connection promise
-        var prefix = this.dbprefix;
-        cop.then( function(cop) {
-            Connection.testTables(cop, prefix);
-        });
-
+        this.pdox = new PDOX(this);
     }
 
     /**
@@ -195,15 +145,15 @@ console.log("YADA");
      * Get a connection promise from the pool
      * Make sure to do a conn.release()
      *
-     *     connection = CFG.cop;  // Get a connection promise
-     *     connection.then( function(connection) {
+     *     var thekey = '12345';
+     *     CFG.cop.then( function(connection) {
      *         let sql = 'SELECT * FROM lti_key WHERE key_key = :key';
-     *         connection.query(sql, { key:'12345' }, function(err, rows, fields) {
+     *         connection.query(sql, { key: thekey }, function(err, rows, fields) {
      *             if (err) {
      *                 console.log('Could not load data query', sql);
      *             } else {
-     *                 console.log('test success');
-     *                 console.log(rows);
+     *                 console.log(sql);
+     *                 console.log("Rows:",rows.length);
      *             }
      *             connection.release();
      *         });
@@ -215,12 +165,13 @@ console.log("YADA");
             if(err) { 
                 deferred.reject(err); 
             } else { 
-                Connection.setupFormat(connection);
+                PDOX.setupFormat(connection);
                 deferred.resolve(connection); 
             } 
         }); 
         return deferred.promise; 
     }; 
+
 }
     
 module.exports = new Config();
