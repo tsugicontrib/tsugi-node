@@ -18,6 +18,7 @@ class Config {
 
     constructor() {
 
+console.log("YADA");
         /**
          * This is the URL where the software is hosted
          * Do not add a trailing slash to this string
@@ -26,23 +27,22 @@ class Config {
         // this.wwwroot = 'http://localhost:8888/tsugi';   // For MAMP
         
         /**
-         * Database connection information to configure the PDO connection
-         * You need to point this at a database with am account and password
-         * that can create tables.   To make the initial tables go into Admin
-         * console to run the upgrade.php script which auto-creates the tables.
+         * Database connection information.
          */
-        this.pdo       = 'mysql:host=127.0.0.1;dbname=tsugi';
-        // this.pdo       = 'mysql:host=127.0.0.1;port=8889;dbname=tsugi'; // MAMP
+        this.dbhost       = '127.0.0.1';
+        this.dbname       = 'tsugi';
+        // this.dbport       = 3306;
+        this.dbport       = 8889; // MAMP
         /**
          * The database user (encrypted)
          * @type {string}
          */
-        this._dbuser    = encryptShortTerm('ltiuser');
+        this._dbuser    = Crypto.encryptShortTerm('ltiuser');
         /**
          * The database password (encrypted)
          * @type {string}
          */
-        this._dbpass    = encryptShortTerm('ltipassword');
+        this._dbpass    = Crypto.encryptShortTerm('ltipassword');
         
         /**
          * You can use the CDN copy of the static content in testing or 
@@ -73,7 +73,7 @@ class Config {
          * The mail secret (encrypted)
          * @type {string}
          */
-        this._mailsecret = encryptShortTerm('warning:please-change-mailsecret-92ds29');
+        this._mailsecret = Crypto.encryptShortTerm('warning:please-change-mailsecret-92ds29');
         /**
          * Mail end of line - Depends on your mailer - may need to be \r\n
          */
@@ -118,25 +118,87 @@ class Config {
          * be faked.  Don't run this in production.
          */
         this.OFFLINE = false;
+
+        // Make the database connection and pool once at the beginning
+        this.pool = null;
+        this.connection = null;
+        var mysql = require('mysql');
+        var connection = mysql.createConnection({
+            host     : this.dbhost,
+            port     : this.dbport,
+            database : this.dbaname,
+            user     : this.dbuser,
+            password : this.dbpass
+        });
+
+console.log("connection",connection);
+        connection.connect();
+        connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
+            if (err) {
+                console.log("Unable to make database connection");
+                console.log("This could be incorrect configuration or missing database");
+                console.log("Here are the rough instructions to make the database tables:");
+                console.log("   CREATE DATABASE tsugi DEFAULT CHARACTER SET utf8;");
+                console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'localhost' IDENTIFIED BY 'ltipassword';");
+                console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'127.0.0.1' IDENTIFIED BY 'ltipassword';");
+                throw err;
+            }
+            console.log('The solution is: ', rows[0].solution);
+        });
+console.log("after",connection);
+
+        /**
+         * A MySql Connection
+         * https://www.npmjs.com/package/mysql
+         */
+        this.connection = connection;
+
+        // Also create a MySql pool
+        var pool  = mysql.createPool({
+            host     : this.dbhost,
+            port     : this.dbport,
+            database : this.dbaname,
+            user     : this.dbuser,
+            password : this.dbpass
+        });
+
+        // Test the pool
+        pool.getConnection(function(err, conn){
+            conn.query("SELECT 1 + 1 AS solution", function(err, rows) {
+                if (err) {
+                    console.log("Unable to make database pool");
+                    throw err;
+                }
+                console.log('The pool solution is: ', rows[0].solution);
+            })
+        });
+
+        /**
+         * A MySql Pool
+         * https://www.npmjs.com/package/mysql
+         */
+        this.pool = pool;
+
+
     }
 
     /**
      * The database user (encrypted)
      * @type {string}
      */
-    get dbuser() { return decryptShortTerm(this._dbuser); }
+    get dbuser() { return Crypto.decryptShortTerm(this._dbuser); }
 
     /**
      * The database password (encrypted)
      * @type {string}
      */
-    get dbpass() { return decryptShortTerm(this._dbpass); }
+    get dbpass() { return Crypto.decryptShortTerm(this._dbpass); }
 
     /**
      * The mail secret (encrypted)
      * @type {string}
      */
-    get mailsecret() { return decryptShortTerm(this._mailsecret); }
+    get mailsecret() { return Crypto.decryptShortTerm(this._mailsecret); }
 }
     
 module.exports = new Config();

@@ -77,7 +77,12 @@ class Tsugi {
         console.log(needed);
         let ns = new Set(needed);
         console.log(ns.has("all"));
+
         let Launch = require('./Launch.js');
+
+        /**
+         * @type {Launch}
+         */
         let launch = new Launch(CFG);
         return launch;
     }

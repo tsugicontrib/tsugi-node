@@ -17,7 +17,7 @@ class Crypto {
      * to store data in a database.
      * @type {string}
      */
-    function encryptShortTerm(v) {
+    static encryptShortTerm(v) {
         if ( v === false ) return false;
         if ( v === null ) return null;
         let encrypted = CryptoJS.AES.encrypt(v.toString(),GLOBAL_LONG_CONFIG_KEY);
@@ -30,7 +30,7 @@ class Crypto {
      * to store data in a database.
      * @type {string}
      */
-    function decryptShortTerm(v) {
+    static decryptShortTerm(v) {
         if ( v === false ) return false;
         if ( v === null ) return null;
         let decrypted = CryptoJS.AES.decrypt(v,GLOBAL_LONG_CONFIG_KEY);

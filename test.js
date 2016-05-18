@@ -1,5 +1,6 @@
 
-var CFG = require('./Config'); 
+// var CFG = require('./Config'); 
+var CFG = require('./src/Config'); 
 var Tsugi = require('./src/Tsugi');
 
 console.log(CFG.dbpass);

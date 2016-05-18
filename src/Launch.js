@@ -22,14 +22,6 @@ class Launch {
          * @type {User}
          */
         this.user = new User(42);
-
-        let Connection = require("./Connection.js");
-
-        /**
-         * The current connection 
-         * @type {User}
-         */
-        this.db = new Connection(CFG);
     }
 
     /**
