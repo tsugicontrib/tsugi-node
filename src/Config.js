@@ -44,6 +44,16 @@ console.log("YADA");
          * @type {string}
          */
         this._dbpass    = Crypto.encryptShortTerm('ltipassword');
+
+        /**
+         * The dbprefix allows you to give all the tables a prefix
+         * in case your hosting only gives you one database.  This
+         * can be short like "t_" and can even be an empty string if you
+         * can make a separate database for each instance of TSUGI.
+         * This allows you to host multiple instances of TSUGI in a
+         * single database if your hosting choices are limited.
+         */
+        this.dbprefix  = '';
         
         /**
          * You can use the CDN copy of the static content in testing or 
@@ -54,16 +64,6 @@ console.log("YADA");
          */
          this.staticroot = 'https://www.dr-chuck.net/tsugi-static';
          // this.staticroot = this.wwwroot . "/../tsugi-static";
-        
-        /**
-         * The dbprefix allows you to give all the tables a prefix
-         * in case your hosting only gives you one database.  This
-         * can be short like "t_" and can even be an empty string if you
-         * can make a separate database for each instance of TSUGI.
-         * This allows you to host multiple instances of TSUGI in a
-         * single database if your hosting choices are limited.
-         */
-        this.dbprefix  = '';
         
         /**
          * Where the bulk mail comes from - should be a real address with 
@@ -127,10 +127,13 @@ console.log("YADA");
         var connection = mysql.createConnection({
             host     : this.dbhost,
             port     : this.dbport,
-            database : this.dbaname,
+            database : this.dbname,
             user     : this.dbuser,
             password : this.dbpass
         });
+        connection.connect();
+
+        // Test to see if the connection is alive
         Connection.testConnection(connection);
 
         /**
@@ -143,7 +146,7 @@ console.log("YADA");
         var pool  = mysql.createPool({
             host     : this.dbhost,
             port     : this.dbport,
-            database : this.dbaname,
+            database : this.dbname,
             // TODO: Pool parameters
             user     : this.dbuser,
             password : this.dbpass
@@ -158,6 +161,8 @@ console.log("YADA");
          */
         this.pool = pool;
 
+        // Test for the existence of the data tables
+        Connection.testTables(connection, this.dbprefix);
     }
 
     /**
