@@ -1,12 +1,11 @@
 Tsugi Node Library
 ==================
 
-This is a Tsugi Node library Hack space.  We are using ES6 and NodeJS 6.0.
+We are using NodeJS 6.0, ES6, and Express for the Node version of Tsugi.
 
 * [API Documentation](http://do1.dr-chuck.com/tsugi-node/esdoc/)
 
-At this point it is mostly just exploring the OO model where we need to work
-with all of these simultaneously:
+We are using an OO model where we need to work with all of these simultaneously:
 
 * ES6
 * NodeJS require pattern 

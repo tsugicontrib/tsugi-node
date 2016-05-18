@@ -2,6 +2,11 @@
   "name": "tsugi-node",
   "version": "0.0.1",
   "dependencies": {
+    "body-parser": "^1.14.2",
+    "express": "^4.13.4",
+    "tsugi-node-lti": "https://github.com/csev/tsugi-node-lti.git#master",
+    "multer": "^1.1.0",
+    "mysql": ">=1.0.0",
     "crypto-js" : ">=3.0.0"
   },
   "description": "Tsugi Node Library",

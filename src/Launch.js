@@ -10,7 +10,7 @@ class Launch {
      */
     constructor(CFG) {
         /**
-         * A Thing
+         * The current conficuration
          * @type {Config}
          */
         this.CFG = CFG;
@@ -22,6 +22,14 @@ class Launch {
          * @type {User}
          */
         this.user = new User(42);
+
+        let Connection = require("./Connection.js");
+
+        /**
+         * The current connection 
+         * @type {User}
+         */
+        this.db = new Connection(CFG);
     }
 
     /**

@@ -1,24 +1,5 @@
         
-// Lets encrypt some things
-var CryptoJS = require("crypto-js");
-// This is not super-secure - just enough to keep plaintext
-// passwords from showing up in the console.log() output
-// Feel free to improve on this or set it to a long constant.
-const GLOBAL_LONG_CONFIG_KEY = (new Date().toString())+(new Date().getTime())+(Math.random().toString());
-
-function encrypt(v) {
-    if ( v === false ) return false;
-    if ( v === null ) return null;
-    let encrypted = CryptoJS.AES.encrypt(v.toString(),GLOBAL_LONG_CONFIG_KEY);
-    return encrypted.toString();
-}
-
-function decrypt(v) {
-    if ( v === false ) return false;
-    if ( v === null ) return null;
-    let decrypted = CryptoJS.AES.decrypt(v,GLOBAL_LONG_CONFIG_KEY);
-    return decrypted.toString(CryptoJS.enc.Utf8);
-}
+var Crypto = require("./Crypto");
 
 /**
  * This is a sample of the configuration file.  Copy this to 
@@ -56,12 +37,12 @@ class Config {
          * The database user (encrypted)
          * @type {string}
          */
-        this._dbuser    = encrypt('ltiuser');
+        this._dbuser    = encryptShortTerm('ltiuser');
         /**
          * The database password (encrypted)
          * @type {string}
          */
-        this._dbpass    = encrypt('ltipassword');
+        this._dbpass    = encryptShortTerm('ltipassword');
         
         /**
          * You can use the CDN copy of the static content in testing or 
@@ -92,7 +73,7 @@ class Config {
          * The mail secret (encrypted)
          * @type {string}
          */
-        this._mailsecret = encrypt('warning:please-change-mailsecret-92ds29');
+        this._mailsecret = encryptShortTerm('warning:please-change-mailsecret-92ds29');
         /**
          * Mail end of line - Depends on your mailer - may need to be \r\n
          */
@@ -143,19 +124,19 @@ class Config {
      * The database user (encrypted)
      * @type {string}
      */
-    get dbuser() { return decrypt(this._dbuser); }
+    get dbuser() { return decryptShortTerm(this._dbuser); }
 
     /**
      * The database password (encrypted)
      * @type {string}
      */
-    get dbpass() { return decrypt(this._dbpass); }
+    get dbpass() { return decryptShortTerm(this._dbpass); }
 
     /**
      * The mail secret (encrypted)
      * @type {string}
      */
-    get mailsecret() { return decrypt(this._mailsecret); }
+    get mailsecret() { return decryptShortTerm(this._mailsecret); }
 }
     
 module.exports = new Config();
