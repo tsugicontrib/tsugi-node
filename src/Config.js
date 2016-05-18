@@ -1,5 +1,6 @@
         
 var Crypto = require("./Crypto");
+var Connection = require("./Connection");
 
 /**
  * This is a sample of the configuration file.  Copy this to 
@@ -130,22 +131,7 @@ console.log("YADA");
             user     : this.dbuser,
             password : this.dbpass
         });
-
-console.log("connection",connection);
-        connection.connect();
-        connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
-            if (err) {
-                console.log("Unable to make database connection");
-                console.log("This could be incorrect configuration or missing database");
-                console.log("Here are the rough instructions to make the database tables:");
-                console.log("   CREATE DATABASE tsugi DEFAULT CHARACTER SET utf8;");
-                console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'localhost' IDENTIFIED BY 'ltipassword';");
-                console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'127.0.0.1' IDENTIFIED BY 'ltipassword';");
-                throw err;
-            }
-            console.log('The solution is: ', rows[0].solution);
-        });
-console.log("after",connection);
+        Connection.testConnection(connection);
 
         /**
          * A MySql Connection
@@ -158,27 +144,19 @@ console.log("after",connection);
             host     : this.dbhost,
             port     : this.dbport,
             database : this.dbaname,
+            // TODO: Pool parameters
             user     : this.dbuser,
             password : this.dbpass
         });
 
-        // Test the pool
-        pool.getConnection(function(err, conn){
-            conn.query("SELECT 1 + 1 AS solution", function(err, rows) {
-                if (err) {
-                    console.log("Unable to make database pool");
-                    throw err;
-                }
-                console.log('The pool solution is: ', rows[0].solution);
-            })
-        });
+        // Test the pool (async)
+        Connection.testPool(pool);
 
         /**
          * A MySql Pool
          * https://www.npmjs.com/package/mysql
          */
         this.pool = pool;
-
 
     }
 
