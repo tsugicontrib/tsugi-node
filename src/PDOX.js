@@ -1,4 +1,5 @@
 var Q = require("q");
+var mysql = require("mysql");
 
 /**
  * Routines to handle connection chores.
@@ -7,34 +8,18 @@ var Q = require("q");
 class PDOX {
 
     constructor(CFG) {
-console.log("PDOX is being constructed!");
-
-        this.CFG = CFG;  // Retain for leter
-
-        // Make the database connection and pool once at the beginning
-        this.pool = null;
-        this.connection = null;
-        var mysql = require('mysql');
-        var connection = mysql.createConnection({
-            host     : CFG.dbhost,
-            port     : CFG.dbport,
-            database : CFG.dbname,
-            user     : CFG.dbuser,
-            password : CFG.dbpass
-        });
-        connection.connect();
-
-        // Test to see if the connection is alive
-        this.setupFormat(connection);
-        this.testConnection(connection);
+        /**
+         * A reference to the configuration object (private)
+         */
+        this._CFG = CFG;  // Retain for leter
 
         /**
-         * A MySql Connection
-         * https://www.npmjs.com/package/mysql
+         * The database pool (private)
+         * https://www.npmjs.com/package/mysql#pooling-connections
          */
-        this.connection = connection;
+        this._pool = null;
 
-        // Also create a MySql pool
+        // Create a MySql pool
         var pool  = mysql.createPool({
             host     : CFG.dbhost,
             port     : CFG.dbport,
@@ -44,16 +29,12 @@ console.log("PDOX is being constructed!");
             password : CFG.dbpass
         });
 
-        // Test the pool (async)
+        // Test the pool (async - will fail later)
         this.testPool(pool);
 
-        /**
-         * A MySql Pool - does not yes suport the :title syntax
-         * https://www.npmjs.com/package/mysql
-         */
-        this.pool = pool;
-        // TODO: Make this handle the :title syntax
+        this._pool = pool;
 
+        // Check the tables (async - will fail later)
         let sql = this.fixPrefix('SELECT * FROM {$p}lti_key WHERE key_key = :key_key');
         this.allRows(sql,{ key_key: '12345' }).then( 
             function(rows) {
@@ -73,7 +54,7 @@ console.log("PDOX is being constructed!");
      * Replace {$p} with the configured database table prefix.
      */
     fixPrefix(sql) {
-        return sql.replace('{$p}', this.CFG.dbprefix);
+        return sql.replace('{$p}', this._CFG.dbprefix);
     }
 
     /**
@@ -96,24 +77,6 @@ console.log("PDOX is being constructed!");
         };
      }
      
-     /**
-     * Test the connection
-     */
-    testConnection(connection) {
-        connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
-            if (err) {
-                console.log("Unable to make database connection");
-                console.log("This could be incorrect configuration or missing database");
-                console.log("Here are the rough instructions to make the database tables:");
-                console.log("   CREATE DATABASE tsugi DEFAULT CHARACTER SET utf8;");
-                console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'localhost' IDENTIFIED BY 'ltipassword';");
-                console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'127.0.0.1' IDENTIFIED BY 'ltipassword';");
-                throw err;
-            }
-            console.log('Connection test success');
-        });
-    }
-
     /**
      * Test the pool
      */
@@ -122,6 +85,11 @@ console.log("PDOX is being constructed!");
             conn.query("SELECT 1 + 1 AS solution", function(err, rows) {
                 if (err) {
                     console.log("Unable to make database pool");
+                    console.log("This could be incorrect configuration or missing database");
+                    console.log("Here are the rough instructions to make the database tables:");
+                    console.log("   CREATE DATABASE tsugi DEFAULT CHARACTER SET utf8;");
+                    console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'localhost' IDENTIFIED BY 'ltipassword';");
+                    console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'127.0.0.1' IDENTIFIED BY 'ltipassword';");
                     throw err;
                 }
                 console.log('Pool test success');
@@ -150,7 +118,7 @@ console.log("PDOX is being constructed!");
     cop() {
         var deferred = Q.defer();
         var setupFormat = this.setupFormat;
-        this.pool.getConnection(function(err, connection) {
+        this._pool.getConnection(function(err, connection) {
             if(err) {
                 deferred.reject(err);
             } else {

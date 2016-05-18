@@ -30,6 +30,30 @@ Promise.all([p1,p2,p3]).then(function(values) {
     console.log("Bummer",reason);
 } );
 
+// Chaining... 
+// http://www.html5rocks.com/en/tutorials/es6/promises/
+var i = 0;
+var promise = new Promise(function(resolve, reject) {
+  resolve(42);
+});
+
+promise.then(function(p) {
+   console.log("0,p,i",p,i);
+   i = i + 1;
+   return(p+1);
+}).then(function(p) {
+   console.log("0,p,i",p,i);
+   i = i + 1;
+   return(p+1);
+}).then(function(p) {
+   console.log("0,p,i",p,i);
+   i = i + 1;
+   return(p+1);
+});
+
+
+
+
 /*
 
 public class TsugiTest {
