@@ -1,11 +1,32 @@
 /**
  * Some static routines to handle connection chores.
+ * https://www.npmjs.com/package/mysql
  */
 class Connection {
 
     /**
+     * Make the PDO-style format substitutions work
+     *
+     * https://www.npmjs.com/package/mysql#preparing-queries
+     *
+     *     connection.query("UPDATE posts SET title = :title", 
+     *         { title: "Hello MySQL" });
+     */
+    static setupFormat(connection) {
+        connection.config.queryFormat = function (query, values) {
+            if (!values) return query;
+            return query.replace(/\:(\w+)/g, function (txt, key) {
+                if (values.hasOwnProperty(key)) {
+console.log("BINDING ",key,txt,values[key]);
+                    return this.escape(values[key]);
+                }
+                return txt;
+            }.bind(this));
+        };
+    }
+
+    /**
      * Test the connection
-     * https://www.npmjs.com/package/mysql
      */
     static testConnection(connection) {
         connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
@@ -24,7 +45,6 @@ class Connection {
 
     /**
      * Test the pool
-     * https://www.npmjs.com/package/mysql
      */
     static testPool(pool) {
         pool.getConnection(function(err, conn){
@@ -39,12 +59,12 @@ class Connection {
     }
 
     /**
-     * Test the connection
+     * Test the presence of tables
      * https://www.npmjs.com/package/mysql
      */
     static testTables(connection, dbprefix) {
-        let sql = 'SELECT * FROM '+dbprefix+'lti_key';
-        connection.query(sql, function(err, rows, fields) {
+        let sql = 'SELECT * FROM '+dbprefix+'lti_key WHERE key_key = :key_key';
+        connection.query(sql, { key_key:'12345' }, function(err, rows, fields) {
             if (err) {
                 console.log('Could not load data query', sql);
                 console.log('You need to install the Tsugi application console (a PHP app)');
@@ -53,6 +73,7 @@ class Connection {
                 throw err;
             }
             console.log('Table test success');
+            // console.log(rows);
         });
     }
 }

@@ -2,6 +2,7 @@
   "name": "tsugi-node",
   "version": "0.0.1",
   "dependencies": {
+    "q": ">=1.0",
     "body-parser": "^1.14.2",
     "express": "^4.13.4",
     "tsugi-node-lti": "https://github.com/csev/tsugi-node-lti.git#master",

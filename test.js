@@ -10,6 +10,19 @@ launch = Tsugi.requireData(CFG);
 console.log(launch);
 console.log(launch.user.id);
 
+var thekey = '12345';
+CFG.cop.then( function(connection) {
+        let sql = 'SELECT * FROM lti_key WHERE key_key = :key_key';
+        connection.query(sql, { key_key: thekey }, function(err, rows, fields) {
+            if (err) {
+                console.log('Could not load data query', sql);
+            } else {
+                console.log('test success');
+            }
+            connection.release();
+        });
+});
+
 /*
 
 public class TsugiTest {

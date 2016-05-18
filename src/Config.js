@@ -1,6 +1,7 @@
         
 var Crypto = require("./Crypto");
 var Connection = require("./Connection");
+var Q = require("q");
 
 /**
  * This is a sample of the configuration file.  Copy this to 
@@ -134,6 +135,7 @@ console.log("YADA");
         connection.connect();
 
         // Test to see if the connection is alive
+        Connection.setupFormat(connection);
         Connection.testConnection(connection);
 
         /**
@@ -156,13 +158,19 @@ console.log("YADA");
         Connection.testPool(pool);
 
         /**
-         * A MySql Pool
+         * A MySql Pool - does not yes suport the :title syntax
          * https://www.npmjs.com/package/mysql
          */
         this.pool = pool;
+        // TODO: Make this handle the :title syntax
 
         // Test for the existence of the data tables
-        Connection.testTables(connection, this.dbprefix);
+        let cop = this.cop;  // Get a connection promise
+        var prefix = this.dbprefix;
+        cop.then( function(cop) {
+            Connection.testTables(cop, prefix);
+        });
+
     }
 
     /**
@@ -182,6 +190,37 @@ console.log("YADA");
      * @type {string}
      */
     get mailsecret() { return Crypto.decryptShortTerm(this._mailsecret); }
+
+    /**
+     * Get a connection promise from the pool
+     * Make sure to do a conn.release()
+     *
+     *     connection = CFG.cop;  // Get a connection promise
+     *     connection.then( function(connection) {
+     *         let sql = 'SELECT * FROM lti_key WHERE key_key = :key';
+     *         connection.query(sql, { key:'12345' }, function(err, rows, fields) {
+     *             if (err) {
+     *                 console.log('Could not load data query', sql);
+     *             } else {
+     *                 console.log('test success');
+     *                 console.log(rows);
+     *             }
+     *             connection.release();
+     *         });
+     *     });
+     */
+    get cop() { 
+        var deferred = Q.defer(); 
+        this.pool.getConnection(function(err, connection) {
+            if(err) { 
+                deferred.reject(err); 
+            } else { 
+                Connection.setupFormat(connection);
+                deferred.resolve(connection); 
+            } 
+        }); 
+        return deferred.promise; 
+    }; 
 }
     
 module.exports = new Config();
