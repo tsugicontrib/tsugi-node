@@ -9,6 +9,8 @@ class PDOX {
     constructor(CFG) {
 console.log("PDOX is being constructed!");
 
+        this.CFG = CFG;  // Retain for leter
+
         // Make the database connection and pool once at the beginning
         this.pool = null;
         this.connection = null;
@@ -32,7 +34,6 @@ console.log("PDOX is being constructed!");
          */
         this.connection = connection;
 
-
         // Also create a MySql pool
         var pool  = mysql.createPool({
             host     : CFG.dbhost,
@@ -52,16 +53,29 @@ console.log("PDOX is being constructed!");
          */
         this.pool = pool;
         // TODO: Make this handle the :title syntax
-/*
-        // Test for the existence of the data tables
-        let cop = this.cop;  // Get a connection promise
-        var prefix = this.dbprefix;
-        cop.then( function(cop) {
-            this.testTables(cop, prefix);
-        });
-*/
 
+        let sql = this.fixPrefix('SELECT * FROM {$p}lti_key WHERE key_key = :key_key');
+        this.allRows(sql,{ key_key: '12345' }).then( 
+            function(rows) {
+                console.log("Table test success.");
+            },
+            function (err) {
+                console.log('Could not load data query', sql);
+                console.log('You need to install the Tsugi application console (a PHP app)');
+                console.log('and use the Admin functionality to create the Tsugi tables');
+                console.log('to initialize this application.');
+                throw err;
+            }
+        );
     }
+
+    /**
+     * Replace {$p} with the configured database table prefix.
+     */
+    fixPrefix(sql) {
+        return sql.replace('{$p}', this.CFG.dbprefix);
+    }
+
     /**
      * Make the PDO-style format substitutions work
      *
@@ -80,9 +94,9 @@ console.log("PDOX is being constructed!");
                 return txt;
             }.bind(this));
         };
-    }
-
-    /**
+     }
+     
+     /**
      * Test the connection
      */
     testConnection(connection) {
@@ -112,25 +126,6 @@ console.log("PDOX is being constructed!");
                 }
                 console.log('Pool test success');
             })
-        });
-    }
-
-    /**
-     * Test the presence of tables
-     * https://www.npmjs.com/package/mysql
-     */
-    testTables(connection, dbprefix) {
-        let sql = 'SELECT * FROM '+dbprefix+'lti_key WHERE key_key = :key_key';
-        connection.query(sql, { key_key:'12345' }, function(err, rows, fields) {
-            if (err) {
-                console.log('Could not load data query', sql);
-                console.log('You need to install the Tsugi application console (a PHP app)');
-                console.log('and use the Admin functionality to create the Tsugi tables');
-                console.log('to initialize this application.');
-                throw err;
-            }
-            console.log('Table test success');
-            // console.log(rows);
         });
     }
 
@@ -169,7 +164,7 @@ console.log("PDOX is being constructed!");
     /**
      * Run a query and return all the rows from the query and throw any error.
      *
-     *     let sql = 'SELECT * FROM lti_key WHERE key_key = :key_key';
+     *     let sql = 'SELECT * FROM {$p}lti_key WHERE key_key = :key_key';
      *     CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( 
      *          function(rows) {
      *              console.log("Rows:",rows.length);
@@ -179,7 +174,8 @@ console.log("PDOX is being constructed!");
      *          }
      *     );
      *
-     * @param {string} sql The SQL to use
+     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * the database prefix.
      * @param {object} data The key-value pairs for substitution
      */
     allRowsDie(sql, data=null) {
@@ -198,10 +194,16 @@ console.log("PDOX is being constructed!");
      *               console.log("Bummer",reason); 
      *          }
      *     );
+     *
+     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * the database prefix.
+     * @param {object} data The key-value pairs for substitution
+     * @param {boolean} dothrow Whether to throw or return the error
      */
     allRows(sql, data=null, dothrow=false) {
         // console.log("allRowsDie",sql); console.log("   ",data);
         var deferred = Q.defer();
+        var sql = this.fixPrefix(sql);
         this.cop().then( function(connection) {
             connection.query(sql, data, function(err, rows, fields) {
                 if (err) {

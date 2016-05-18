@@ -12,22 +12,7 @@ console.log(launch);
 console.log(launch.user.id);
 
 let thekey = '12345';
-/*
-CFG.cop.then( function(connection) {
-        let sql = 'SELECT * FROM lti_key WHERE key_key = :key_key';
-        connection.query(sql, { key_key: thekey }, function(err, rows, fields) {
-            if (err) {
-                console.log('Could not load data query', sql);
-            } else {
-                console.log(sql);
-                console.log("Rows:",rows.length);
-            }
-            connection.release();
-        });
-});
-*/
-
-let sql = 'SELECT * FROM lti_key WHERE key_key = :key_key';
+let sql = 'SELECT * FROM {$p}lti_key WHERE key_key = :key_key';
 CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
          console.log("Rows:",rows.length);
      }, function(reason) { console.log("Bummer",reason); } 
