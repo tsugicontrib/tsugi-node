@@ -18,6 +18,36 @@ CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
      }, function(reason) { console.log("Bummer",reason); } 
 );
 
+sql = 'DROP TABLE IF EXISTS {$p}lti_unit_test';
+CFG.pdox.query(sql).then( function(retval) {
+     console.log("drop retval:",retval);
+}).then( function() {
+sql = 'CREATE TABLE {$p}lti_unit_test (id int NOT NULL AUTO_INCREMENT, name varchar(255), email varchar(255), PRIMARY KEY(id))';
+CFG.pdox.query(sql).then( function(retval) {
+     console.log("CREATE retval:",retval);
+}).then( function() {
+sql = "INSERT INTO {$p}lti_unit_test (name,email) VALUES ('tsugi', 'tsugi@zap.com')";
+CFG.pdox.insertKey(sql).then( function(retval) {
+     console.log("INSERT retval:",retval);
+}).then( function() {
+sql = "UPDATE {$p}lti_unit_test SET email=:new WHERE name='tsugi'";
+CFG.pdox.queryChanged(sql,{new:'tsugi@fred.com'}).then( function(retval) {
+     console.log("UPDATE retval:",retval);
+}).then( function() {
+sql = "SELECT * FROM {$p}lti_unit_test";
+CFG.pdox.allRowsDie(sql).then( function(retval) {
+     console.log("SELECT retval:",retval);
+}).then( function() {
+sql = "DELETE FROM {$p}lti_unit_test WHERE name='tsugi'";
+CFG.pdox.query(sql).then( function(retval) {
+     console.log("DELETE retval:",retval);
+});
+});
+});
+});
+});
+});
+
 /*
 
 public class TsugiTest {

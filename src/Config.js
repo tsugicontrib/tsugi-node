@@ -1,4 +1,4 @@
-        
+
 var Crypto = require("./Crypto");
 var PDOX = require("./PDOX");
 var Q = require("q");
@@ -121,6 +121,22 @@ class Config {
         this.OFFLINE = false;
 
         this.pdox = new PDOX(this);
+
+        // Check the tables (async - will fail later)
+        let sql = this.pdox.fixPrefix('SELECT * FROM {$p}lti_key WHERE key_key = :key_key');
+        this.pdox.allRows(sql,{ key_key: '12345' }).then(
+            function(rows) {
+                console.log("Table test success.");
+            },
+            function (err) {
+                console.log('Could not load data query', sql);
+                console.log('You need to install the Tsugi application console (a PHP app)');
+                console.log('and use the Admin functionality to create the Tsugi tables');
+                console.log('to initialize this application.');
+                throw err;
+            }
+        );
+
     }
 
     /**

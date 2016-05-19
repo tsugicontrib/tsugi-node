@@ -41,21 +41,6 @@ class PDOX {
         this._testPool(pool);
 
         this._pool = pool;
-
-        // Check the tables (async - will fail later)
-        let sql = this.fixPrefix('SELECT * FROM {$p}lti_key WHERE key_key = :key_key');
-        this.allRows(sql,{ key_key: '12345' }).then( 
-            function(rows) {
-                console.log("Table test success.");
-            },
-            function (err) {
-                console.log('Could not load data query', sql);
-                console.log('You need to install the Tsugi application console (a PHP app)');
-                console.log('and use the Admin functionality to create the Tsugi tables');
-                console.log('to initialize this application.');
-                throw err;
-            }
-        );
     }
 
     /**
@@ -176,7 +161,7 @@ class PDOX {
      *     );
      *
      * @param {string} sql The SQL to use - it is ok to use {$p} for 
-     * the database prefix.
+     * the database prefix - must be SELECT
      * @param {object} data The key-value pairs for substitution
      * @param {boolean} dothrow Whether to throw or return the error
      */
@@ -190,18 +175,110 @@ class PDOX {
                     let myerror = 'Could not load data query '+sql;
                     console.log(myerror);
                     console.log(data);
+                    connection.release();
                     if ( dothrow )  throw myerror;
                     deferred.reject('Could not load data query', sql);
                 } else {
                     // console.log('query die returning rows:', rows.length);
+                    connection.release();
                     deferred.resolve(rows);
                 }
-                connection.release();
             });
         });
         return deferred.promise;
     }
 
+    /**
+     * Run a query and return the number of affected rows, throw on error
+     *
+     *     sql = "DELETE FROM {$p}lti_unit_test WHERE name='tsugi'";
+     *     CFG.pdox.queryChanged(sql).then( function(retval) {
+     *          console.log("DELETE retval:",retval);
+     *     });
+     *
+     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * the database prefix - must not be a SELECT
+     * @param {object} data The key-value pairs for substitution (optional)
+     */
+    query(sql, data=null) {
+        return this.queryFull(sql, data, 0, true);
+    }
+
+    /**
+     * Run a query and return the number of changed rows, throw on error
+     *
+     *     CFG.pdox.queryChanged(sql,{new:'tsugi@fred.com'}).then(
+     *         function(retval) {
+     *             console.log("UPDATE retval:",retval);
+     *         });
+     *
+     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * the database prefix - must not be a SELECT
+     * @param {object} data The key-value pairs for substitution (optional)
+     */
+    queryChanged(sql, data=null) {
+        return this.queryFull(sql, data, 1, true);
+    }
+
+    /**
+     * Run an INSERT and return the generated key, throw on error
+     *
+     *     sql = "INSERT INTO {$p}lti_unit_test (name,email) 
+     *            VALUES ('tsugi', 'tsugi@zap.com')";
+     *     CFG.pdox.insertKey(sql).then( function(retval) {
+     *          console.log("INSERT retval:",retval);
+     *     });
+     *
+     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * the database prefix - must be an INSERT to a table with 
+     * an auto-increment field.
+     * @param {object} data The key-value pairs for substitution (optional)
+     */
+    insertKey(sql, data=null) {
+        return this.queryFull(sql, data, 2, true);
+    }
+
+    /**
+     * Run a query and return the appropriate result for the query
+     *
+     * This has more parameters and is typically used by methods with
+     * simpler signatures.
+     *
+     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * the database prefix - must not be SELECT.
+     * @param {object} data The key-value pairs for substitution
+     * @param {number} returnval What to return from the function.
+     * 0=rows affected, 1=rows changed, 2=last insert id
+     * @param {boolean} dothrow Whether to throw or return the error
+     */
+    queryFull(sql, data=null, returnval=0, dothrow=false) {
+        // console.log("allRowsDie",sql); console.log("   ",data);
+        var deferred = Q.defer();
+        var sql = this.fixPrefix(sql);
+        this.cop().then( function(connection) {
+            connection.query(sql, data, function(err, result) {
+                if (err) {
+                    let myerror = 'Could not execute query '+sql;
+                    console.log(myerror);
+                    console.log(data);
+                    connection.release();
+                    if ( dothrow )  throw myerror;
+                    deferred.reject('Could not execute query', sql);
+                } else {
+                    // console.log('query die returning rows:', rows.length);
+                    connection.release();
+                    if ( returnval == 2 ) {
+                        deferred.resolve(result.insertId);
+                    } else if ( returnval == 1 ) {
+                        deferred.resolve(result.changedRows);
+                    } else {
+                        deferred.resolve(result.affectedRows);
+                    }
+                }
+            });
+        });
+        return deferred.promise;
+    }
 }
     
 module.exports = PDOX;
