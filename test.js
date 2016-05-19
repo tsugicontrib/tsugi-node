@@ -1,8 +1,14 @@
 
 // var CFG = require('./Config'); 
 var CFG = require('./src/Config'); 
-var PDOX = require('./src/PDOX'); 
+CFG.unitTesting = true;
 var Tsugi = require('./src/Tsugi');
+var TsugiUtils = require('./src/TsugiUtils');
+var Crypto = require('./src/Crypto'); 
+
+if ( CFG.unitTesting ) {
+    console.log("Unit testing");
+}
 
 console.log(CFG.dbpass);
 console.log(Tsugi);
@@ -48,6 +54,58 @@ CFG.pdox.query(sql).then( function(retval) {
 });
 });
 
+let bob = Crypto.sha256('bob');
+console.log('sha256("bob")',bob);
+
+    function fakePostCore() {
+        f = {};
+        f.user_id = "292832126";
+        f.resource_link_id = "667587732";
+        f.tool_consumer_info_product_family_code = "ims";
+        f.tool_consumer_info_version = "1.1";
+        f.tool_consumer_instance_guid = "lmsng.ischool.edu";
+        f.tool_consumer_instance_description = "University of Information";
+        f.custom_assn = "mod/attend/index.php";
+        f.custom_due = "2016-12-12 10:00:00.5";
+        f.custom_timezone = "Pacific/Honolulu";
+        f.custom_penalty_time = "86400";
+        f.custom_penalty_cost = "0.2";
+        f.oauth_callback = "about:blank";
+        f.launch_presentation_css_url = "http://localhost:8888/tsugi/lms.css";
+        f.lti_version = "LTI-1p0";
+        f.lti_message_type = "basic-lti-launch-request";
+        f.ext_submit = "Finish Launch";
+        f.oauth_version = "1.0";
+        f.oauth_nonce = "e5c4e475c39eb4d4223a232f99fbd39f";
+        f.oauth_timestamp = "1433793103";
+        f.oauth_consumer_key = "xyzzy";
+        f.oauth_signature_method = "HMAC-SHA1";
+        f.oauth_signature = "y21x1iiVNp2UmDNJRp/MYLsgkEM=";
+        f.ext_submit = "Finish Launch";
+        return f;
+    }
+
+    function fakePost1() {
+        f = fakePostCore();
+        f.context_id = "456434513";
+        f.context_label = "SI106";
+        f.context_title = "Introduction to Programming";
+        f.lis_person_name_full = "Jane Instructor";
+        f.lis_person_name_family = "Instructor";
+        f.lis_person_name_given = "Jane";
+        f.lis_person_contact_email_primary = "inst@ischool.edu";
+        f.lis_person_sourcedid = "ischool.edu:inst";
+        f.lis_result_sourcedid = "e10e575674e68bbcd873e2962f5a138b";
+        f.lis_outcome_service_url = "http://localhost:8888/tsugi/common/tool_consumer_outcome.php?b64=MTIzNDU6OjpzZWNyZXQ6Ojo=";
+        f.resource_link_title = "Activity: attend";
+        f.resource_link_description = "A weekly blog.";
+        f.roles = "Instructor";
+        return f;
+    }
+
+p = fakePost1();
+q = Tsugi.extractPost(p);
+console.log(q);
 /*
 
 public class TsugiTest {

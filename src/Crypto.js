@@ -37,6 +37,17 @@ class Crypto {
         return decrypted.toString(CryptoJS.enc.Utf8);
     }
 
+    /**
+     * Simple sha256 computtion
+     * @type {string}
+     */
+    static sha256(v) {
+        if ( v === false ) return false;
+        if ( v === null ) return null;
+        let hashed = CryptoJS.SHA256(v);
+        return hashed.toString();
+    }
+
 }
 
 module.exports = Crypto;

@@ -120,6 +120,7 @@ class Config {
          */
         this.OFFLINE = false;
 
+        this.unitTesting = false;
         this.pdox = new PDOX(this);
 
         // Check the tables (async - will fail later)
@@ -156,38 +157,6 @@ class Config {
      * @type {string}
      */
     get mailsecret() { return Crypto.decryptShortTerm(this._mailsecret); }
-
-    /**
-     * Get a connection promise from the pool
-     * Make sure to do a conn.release()
-     *
-     *     var thekey = '12345';
-     *     CFG.cop.then( function(connection) {
-     *         let sql = 'SELECT * FROM lti_key WHERE key_key = :key';
-     *         connection.query(sql, { key: thekey }, function(err, rows, fields) {
-     *             if (err) {
-     *                 console.log('Could not load data query', sql);
-     *             } else {
-     *                 console.log(sql);
-     *                 console.log("Rows:",rows.length);
-     *             }
-     *             connection.release();
-     *         });
-     *     });
-     */
-    get cop() { 
-        var deferred = Q.defer(); 
-        this.pool.getConnection(function(err, connection) {
-            if(err) { 
-                deferred.reject(err); 
-            } else { 
-                PDOX.setupFormat(connection);
-                deferred.resolve(connection); 
-            } 
-        }); 
-        return deferred.promise; 
-    }; 
-
 }
     
 module.exports = new Config();
