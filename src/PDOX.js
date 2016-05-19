@@ -194,7 +194,7 @@ class PDOX {
      * Run a query and return the number of affected rows, throw on error
      *
      *     sql = "DELETE FROM {$p}lti_unit_test WHERE name='tsugi'";
-     *     CFG.pdox.query(sql).then( function(retval) {
+     *     pdox.query(sql).then( function(retval) {
      *          console.log("DELETE retval:",retval);
      *     });
      *
@@ -210,10 +210,11 @@ class PDOX {
      * Run a query and return the number of changed rows, throw on error
      *
      *     sql = "UPDATE {$p}lti_unit_test SET email=:new WHERE name='tsugi'";
-     *     pdox.queryChanged(sql,{new:'tsugi@fred.com'}).then(
+     *     pdox.queryChanged(sql, {new:'tsugi@fred.com'}).then(
      *         function(retval) {
      *             console.log("UPDATE retval:",retval);
-     *         });
+     *         }
+     *     );
      *
      * @param {string} sql The SQL to use - it is ok to use {$p} for 
      * the database prefix - must not be a SELECT
@@ -228,7 +229,7 @@ class PDOX {
      *
      *     sql = "INSERT INTO {$p}lti_unit_test (name,email) 
      *            VALUES ('tsugi', 'tsugi@zap.com')";
-     *     .pdox.insertKey(sql).then( function(retval) {
+     *     pdox.insertKey(sql).then( function(retval) {
      *          console.log("INSERT retval:",retval);
      *     });
      *
