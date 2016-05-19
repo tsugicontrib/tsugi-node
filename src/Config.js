@@ -124,7 +124,7 @@ class Config {
         this.pdox = new PDOX(this);
 
         // Check the tables (async - will fail later)
-        let sql = this.pdox.fixPrefix('SELECT * FROM {$p}lti_key WHERE key_key = :key_key');
+        let sql = this.pdox.setPrefix('SELECT * FROM {p}lti_key WHERE key_key = :key_key');
         this.pdox.allRows(sql,{ key_key: '12345' }).then(
             function(rows) {
                 console.log("Table test success.");

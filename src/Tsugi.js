@@ -1,5 +1,7 @@
 
 var TsugiUtils = require("./TsugiUtils");
+var Crypto = require("./Crypto");
+
 /**
  *  The Tsugi class/namespace/Utilities
  * 
@@ -169,6 +171,177 @@ class Tsugi {
         }
 
         return o;
+    }
+
+    // TODO: Make sure to do nonce cleanup
+
+    /**
+     * Load the data from our lti_ tables using one long LEFT JOIN
+     *
+     * This data may or may not exist - hence the use of the long
+     * LEFT JOIN.
+     *
+     * @param {Config} CFG A Tsugi Configuration object
+     * @param {object} post The post data
+     */
+    loadAllData(CFG, post)
+    {
+        let sql =
+            "SELECT k.key_id, k.key_key, k.secret, k.new_secret, c.settings_url AS key_settings_url, \n" +
+            "n.nonce, \n" +
+            "c.context_id, c.title AS context_title, context_sha256, c.settings AS context_settings, \n" +
+            "c.settings_url AS context_settings_url,\n"+
+            "l.link_id, l.title AS link_title, l.settings AS link_settings, l.settings_url AS link_settings_url,\n"+
+            "u.user_id, u.displayname AS user_displayname, u.email AS user_email, user_key,\n"+
+            "u.subscribe AS subscribe, u.user_sha256 AS user_sha256,\n"+
+            "m.membership_id, m.role, m.role_override,\n"+
+            "r.result_id, r.grade, r.note AS result_comment, r.result_url, r.sourcedid";
+
+        if ( post["service"] != null ) {
+            sql += ",\n" +
+            "s.service_id, s.service_key AS service";
+        }
+
+        sql += "\nFROM {p}lti_key AS k\n" +
+            "LEFT JOIN {p}lti_nonce AS n ON k.key_id = n.key_id AND n.nonce = :nonce\n" + // :nonce 1
+            "LEFT JOIN {p}lti_context AS c ON k.key_id = c.key_id AND c.context_sha256 = :context\n" + // :context 2
+            "LEFT JOIN {p}lti_link AS l ON c.context_id = l.context_id AND l.link_sha256 = :link\n" + // :link 3
+            "LEFT JOIN {p}lti_user AS u ON k.key_id = u.key_id AND u.user_sha256 = :user\n" + // :user 4
+            "LEFT JOIN {p}lti_membership AS m ON u.user_id = m.user_id AND c.context_id = m.context_id\n" +
+            "LEFT JOIN {p}lti_result AS r ON u.user_id = r.user_id AND l.link_id = r.link_id";
+
+        // Note that extractPost() insures these fields all exist in post
+        let data = {nonce: post.nonce,
+                context: Crypto.sha256(post.context_key),
+                link: Crypto.sha256(post.link_key),
+                user: Crypto.sha256(post.user_key),
+                key: Crypto.sha256(post.key_key) };
+
+        if ( post["service"] != null ) {
+            sql += "\n"+
+            "LEFT JOIN {p}lti_service AS s ON k.key_id = s.key_id AND s.service_sha256 = :service"; // :service 5
+            data.service = Crypto.sha256(post.service);
+        }
+
+        sql += "\nWHERE k.key_sha256 = :key LIMIT 1\n";  // :key 6 or 5
+
+        // console.log(sql);
+        // console.log(data);
+
+        // Return a promise of a query.
+        return CFG.pdox.allRowsDie(sql, data);
+    }
+
+
+    /**
+     * Make sure that the data in our lti_ tables matches the POST data
+     *
+     * This routine compares the POST data with the data pulled from the
+     * lti_ tables and goes through carefully INSERTing or UPDATING
+     * all the nexessary data in the lti_ tables to make sure that
+     * the lti_ table correctly match all the data from the incoming post.
+     *
+     * While this looks like a lot of INSERT and UPDATE statements,
+     * the INSERT statements only run when we see a new user/course/link
+     * for the first time and after that, we only update is something
+     * changes.   So in a high percentage of launches we are not seeing
+     * any new or updated data and so this code just falls through and
+     * does absolutely no SQL.
+     *
+     * @param {Config} CFG A Tsugi Configuration object
+     * @param {object} row The row data (from loadAllData)
+     * @param {object} post The post data
+     */
+    adjustData(CFG, row, post)
+    {
+        let sql = null;
+
+console.log("adjustData starting");
+console.log(row);
+console.log(post);
+        // Connect the user to the key
+        let user_displayname = post["user_displayname"];
+        let user_email = post["user_email"];
+
+        // Here we go with some forced straight line async code NodeJS Style
+
+        let actions = [];
+        TsugiUtils.emptyPromise().then( function() {
+            console.log("CONTEXT HANDLING");
+            if ( row.context_id == null) {
+                let sql = `INSERT INTO {p}lti_context
+                    ( context_key, context_sha256, settings_url, title, key_id, created_at, updated_at ) VALUES
+                    ( :context_key, :context_sha256, :settings_url, :title, :key_id, NOW(), NOW() )`;
+
+                let data = {
+                    context_key: post.context_key,
+                    context_sha256: Crypto.sha256(post.context_key),
+                    settings_url: post.context_settings_url,
+                    title: post.context_title,
+                    key_id: row.key_id
+                };
+
+                return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                    row.context_id = insertId;
+                    row.context_title = post.context_title;
+                    row.context_settings_url = post.context_settings_url;
+                    actions.push("=== Inserted context id="+row.context_id+" "+row.context_title);
+                });
+            } 
+        }).then( function() {
+            console.log("LINK HANDLING");
+            if ( row.link_id == null) {
+                let sql = `INSERT INTO {p}lti_link
+                    ( link_key, link_sha256, settings_url, title, context_id, created_at, updated_at ) VALUES
+                    ( :link_key, :link_sha256, :settings_url, :title, :context_id, NOW(), NOW() )`;
+
+                let data = {
+                    link_key: post.link_key,
+                    link_sha256: Crypto.sha256(post.link_key),
+                    settings_url: post.link_settings_url,
+                    title: post.link_title,
+                    context_id: row.context_id,
+                    key_id: row.key_id
+                };
+
+                return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                    row.link_id = insertId;
+                    row.link_title = post.link_title;
+                    row.link_settings_url = post.link_settings_url;
+                    actions.push("=== Inserted link id="+row.link_id+" "+row.link_title);
+                });
+            } 
+        }).then( function() {
+            console.log("USER HANDLING");
+            if ( row.user_id == null) {
+                let sql = `INSERT INTO {p}lti_user
+                    ( user_key, user_sha256, displayname, email, key_id, created_at, updated_at ) VALUES
+                    ( :user_key, :user_sha256, :displayname, :email, :key_id, NOW(), NOW() )`;
+
+                let data = {
+                    user_key: post.user_key,
+                    user_sha256: Crypto.sha256(post.user_key),
+                    displayname: post.user_displayname,
+                    email: post.user_email,
+                    key_id: row.key_id
+                };
+
+                return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                    row.user_id = insertId;
+                    row.user_displayname = post.user_displayname;
+                    row.email = post.email;
+                    actions.push("=== Inserted user id="+row.user_id+" "+row.user_displayname);
+                });
+            } 
+        }).then( function() {
+            console.log("EEEEEEE");
+            // De-undefine the altered row data
+            TsugiUtils.toNullAll(row);
+            console.log(row);
+            console.log("Actions", actions);
+        });
+            
+        
     }
 
 }

@@ -1,4 +1,6 @@
 
+var Q = require("q");
+
 /**
  * Utilities to avoid repeating ourselves.
  */
@@ -36,6 +38,50 @@ class TsugiUtils {
         }
     }
 
+    // See Also: http://rich.k3r.me/blog/2015/04/29/empty-promises-dos-and-donts-of-es6-promises/
+    /**
+      * Generate an empty Promise NodeJS style
+      *
+      * @param {mixed} val - The value to resolve with
+      */
+    static emptyPromise(val=null)
+    {
+        var deferred = Q.defer();
+        deferred.resolve(val);
+        return deferred.promise;
+    }
+
+    /**
+      * Generate an empty Promise NodeJS style
+      *
+      * @param {mixed} val - The value to reject with
+      */
+    static emptyPromiseFail(val=null)
+    {
+        var deferred = Q.defer();
+        deferred.reject(val);
+        return deferred.promise;
+    }
+
+    /**
+     * Reduce non real values to null
+     */
+    static toNull(v) {
+        if ( typeof v == 'undefined') return null;
+        if ( v === null || v === false ) return null;
+        return v;
+    }
+
+    /**
+     * Reduce non real values to null for an object
+     *
+     * @param {object} v
+     */
+    static toNullAll(row) {
+        for ( let key in row ) {
+            row[key] = this.toNull(row[key]);
+        }
+    }
 }
 
 module.exports = TsugiUtils;

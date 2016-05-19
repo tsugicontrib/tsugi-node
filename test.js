@@ -18,33 +18,33 @@ console.log(launch);
 console.log(launch.user.id);
 
 let thekey = '12345';
-let sql = 'SELECT * FROM {$p}lti_key WHERE key_key = :key_key';
+let sql = 'SELECT * FROM {p}lti_key WHERE key_key = :key_key';
 CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
          console.log("Rows:",rows.length);
      }, function(reason) { console.log("Bummer",reason); } 
 );
 
-sql = 'DROP TABLE IF EXISTS {$p}lti_unit_test';
+sql = 'DROP TABLE IF EXISTS {p}lti_unit_test';
 CFG.pdox.query(sql).then( function(retval) {
      console.log("drop retval:",retval);
 }).then( function() {
-sql = 'CREATE TABLE {$p}lti_unit_test (id int NOT NULL AUTO_INCREMENT, name varchar(255), email varchar(255), PRIMARY KEY(id))';
+sql = 'CREATE TABLE {p}lti_unit_test (id int NOT NULL AUTO_INCREMENT, name varchar(255), email varchar(255), PRIMARY KEY(id))';
 CFG.pdox.query(sql).then( function(retval) {
      console.log("CREATE retval:",retval);
 }).then( function() {
-sql = "INSERT INTO {$p}lti_unit_test (name,email) VALUES ('tsugi', 'tsugi@zap.com')";
+sql = "INSERT INTO {p}lti_unit_test (name,email) VALUES ('tsugi', 'tsugi@zap.com')";
 CFG.pdox.insertKey(sql).then( function(retval) {
      console.log("INSERT retval:",retval);
 }).then( function() {
-sql = "UPDATE {$p}lti_unit_test SET email=:new WHERE name='tsugi'";
+sql = "UPDATE {p}lti_unit_test SET email=:new WHERE name='tsugi'";
 CFG.pdox.queryChanged(sql,{new:'tsugi@fred.com'}).then( function(retval) {
      console.log("UPDATE retval:",retval);
 }).then( function() {
-sql = "SELECT * FROM {$p}lti_unit_test";
+sql = "SELECT * FROM {p}lti_unit_test";
 CFG.pdox.allRowsDie(sql).then( function(retval) {
      console.log("SELECT retval:",retval);
 }).then( function() {
-sql = "DELETE FROM {$p}lti_unit_test WHERE name='tsugi'";
+sql = "DELETE FROM {p}lti_unit_test WHERE name='tsugi'";
 CFG.pdox.query(sql).then( function(retval) {
      console.log("DELETE retval:",retval);
 });
@@ -60,15 +60,12 @@ console.log('sha256("bob")',bob);
     function fakePostCore() {
         f = {};
         f.resource_link_id = "667587732";
+        f.resource_link_title = "Activity: attend";
+        f.resource_link_description = "A weekly blog.";
         f.tool_consumer_info_product_family_code = "ims";
         f.tool_consumer_info_version = "1.1";
         f.tool_consumer_instance_guid = "lmsng.ischool.edu";
         f.tool_consumer_instance_description = "University of Information";
-        f.custom_assn = "mod/attend/index.php";
-        f.custom_due = "2016-12-12 10:00:00.5";
-        f.custom_timezone = "Pacific/Honolulu";
-        f.custom_penalty_time = "86400";
-        f.custom_penalty_cost = "0.2";
         f.oauth_callback = "about:blank";
         f.launch_presentation_css_url = "http://localhost:8888/tsugi/lms.css";
         f.lti_version = "LTI-1p0";
@@ -77,7 +74,7 @@ console.log('sha256("bob")',bob);
         f.oauth_version = "1.0";
         f.oauth_nonce = "e5c4e475c39eb4d4223a232f99fbd39f";
         f.oauth_timestamp = "1433793103";
-        f.oauth_consumer_key = "xyzzy";
+        f.oauth_consumer_key = "12345";
         f.oauth_signature_method = "HMAC-SHA1";
         f.oauth_signature = "y21x1iiVNp2UmDNJRp/MYLsgkEM=";
         f.ext_submit = "Finish Launch";
@@ -134,15 +131,13 @@ console.log('sha256("bob")',bob);
         f.lis_person_sourcedid = "ischool.edu:john";
         f.lis_result_sourcedid = "99999999999999999999999999999999";
         f.lis_outcome_service_url = "http://localhost:8888/tsugi/common/tool_consumer_outcome.php?b64=MTIzNDU6OjpzZWNyZXQ6Ojo=";
-        f.resource_link_title = "Activity: attend";
-        f.resource_link_description = "A weekly blog.";
         f.roles = "Learner";
         return f;
     }
 
 
-p = fakePost1();
-q = Tsugi.extractPost(p);
+let p = fakePost1();
+let q = Tsugi.extractPost(p);
 console.log(q);
 p = fakePost1s();
 q = Tsugi.extractPost(p);
@@ -150,6 +145,58 @@ console.log(q);
 p = fakePost2();
 q = Tsugi.extractPost(p);
 console.log(q);
+
+
+Tsugi.loadAllData(CFG, q).then( function(rows) {
+    console.log("Data Rows: ", rows.length);
+    let row = {};
+    if ( rows.length > 0 ) {
+        row = rows[0];
+    }
+    Tsugi.adjustData(CFG, row, q);
+});
+
+/*
+TsugiUtils.emptyPromise(42).then( function(val) {
+    console.log("Empty 42 success:", val);
+}, function(val) {
+    console.log("Empty 42 fail:", val);
+});
+TsugiUtils.emptyPromiseFail(43).then( function(val) {
+    console.log("Empty 43 success:", val);
+}, function(val) {
+    console.log("Empty 43 fail:", val);
+});
+
+TsugiUtils.emptyPromise(44).then( function(val) {
+    console.log("Then 1 success:", val);
+    return 20;
+}, function(val) {
+    console.log("Then 1 fail (bad):", val);
+    return 21;
+}).then( function(val) {
+    console.log("Then 2 starting", val);
+    TsugiUtils.emptyPromiseFail(val).then( function(val) {
+        console.log("Then 2 success (bad):", val);
+        return 22;
+    // Note that if you *catch* the error, it does not break the then chain
+    // }, function(val) {
+        // console.log("Then 2 fail (good):", val);
+        // return 23;
+    }).then( function(val) {
+        console.log("Then 3 starting (bad)", val);
+    });
+});
+
+// Returning a promise from within a promise
+TsugiUtils.emptyPromise(52).then( function(val) {
+    console.log("Nested 0 success:", val);
+    return TsugiUtils.emptyPromise(53);
+}).then( function(val) {
+    console.log("Nested 1 success:", val);
+});
+*/
+
 /*
 
 public class TsugiTest {

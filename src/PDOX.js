@@ -44,10 +44,28 @@ class PDOX {
     }
 
     /**
-     * Replace {$p} with the configured database table prefix.
+     * Replace {p} with the configured database table prefix.
      */
-    fixPrefix(sql) {
-        return sql.replace('{$p}', this._CFG.dbprefix);
+    setPrefix(sql) {
+        return sql.replace(/{p}/g, this._CFG.dbprefix);
+    }
+
+    /**
+     * Dp field Substitution
+     */
+    static substituteFields(conn, sql, data) {
+        let retval = sql.replace(/\:(\w+)/g, function (txt, key) {
+            if (data.hasOwnProperty(key)) {
+                if ( typeof data[key] == 'undefined' || data[key] === null ) {
+                    console.log("NULL at",key);
+                    return 'NULL';
+                }
+                return conn.escape(data[key]);
+            }
+            console.log("Warning: substitution key not found:",key);
+            return txt;
+        });
+        return retval;
     }
 
     /**
@@ -65,8 +83,13 @@ class PDOX {
             if (!values) return query;
             return query.replace(/\:(\w+)/g, function (txt, key) {
                 if (values.hasOwnProperty(key)) {
+                    if ( typeof values[key] == 'undefined' || values[key] === null ) {
+                        // console.log("NULL at",key);
+                        return 'NULL';
+                    }
                     return this.escape(values[key]);
                 }
+                console.log("Warning: substitution key not found:",key);
                 return txt;
             }.bind(this));
         };
@@ -105,9 +128,8 @@ class PDOX {
      *         let sql = 'SELECT * FROM lti_key WHERE key_key = :key';
      *         connection.query(sql, { key: thekey }, function(err, rows, fields) {
      *             if (err) {
-     *                 console.log('Could not load data query', sql);
+     *                 console.log('Could not load data query');
      *             } else {
-     *                 console.log(sql);
      *                 console.log("Rows:",rows.length);
      *             }
      *             connection.release();
@@ -131,7 +153,7 @@ class PDOX {
     /**
      * Run a query and return all the rows from the query and throw any error.
      *
-     *     let sql = 'SELECT * FROM {$p}lti_key WHERE key_key = :key_key';
+     *     let sql = 'SELECT * FROM {p}lti_key WHERE key_key = :key_key';
      *     pdox.allRowsDie(sql,{ key_key: thekey }).then( 
      *          function(rows) {
      *              console.log("Rows:",rows.length);
@@ -141,7 +163,7 @@ class PDOX {
      *          }
      *     );
      *
-     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for 
      * the database prefix.
      * @param {object} data The key-value pairs for substitution
      */
@@ -162,7 +184,7 @@ class PDOX {
      *          }
      *     );
      *
-     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for 
      * the database prefix - must be SELECT
      * @param {object} data The key-value pairs for substitution
      * @param {boolean} dothrow Whether to throw or return the error
@@ -170,16 +192,18 @@ class PDOX {
     allRows(sql, data=null, dothrow=false) {
         // console.log("allRowsDie",sql); console.log("   ",data);
         var deferred = Q.defer();
-        var sql = this.fixPrefix(sql);
+        sql = this.setPrefix(sql);
         this.cop().then( function(connection) {
+            sql = PDOX.substituteFields(connection, sql, data);
             connection.query(sql, data, function(err, rows, fields) {
                 if (err) {
-                    let myerror = 'Could not load data query '+sql;
-                    console.log(myerror);
+                    console.log('Could not load data query');
+                    console.log(sql);
                     console.log(data);
                     connection.release();
+                    let myerror = 'Could not load data query '+sql;
                     if ( dothrow )  throw myerror;
-                    deferred.reject('Could not load data query', sql);
+                    deferred.reject(myerror);
                 } else {
                     // console.log('query die returning rows:', rows.length);
                     connection.release();
@@ -193,12 +217,12 @@ class PDOX {
     /**
      * Run a query and return the number of affected rows, throw on error
      *
-     *     sql = "DELETE FROM {$p}lti_unit_test WHERE name='tsugi'";
+     *     sql = "DELETE FROM {p}lti_unit_test WHERE name='tsugi'";
      *     pdox.query(sql).then( function(retval) {
      *          console.log("DELETE retval:",retval);
      *     });
      *
-     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for 
      * the database prefix - must not be a SELECT
      * @param {object} data The key-value pairs for substitution (optional)
      */
@@ -209,14 +233,14 @@ class PDOX {
     /**
      * Run a query and return the number of changed rows, throw on error
      *
-     *     sql = "UPDATE {$p}lti_unit_test SET email=:new WHERE name='tsugi'";
+     *     sql = "UPDATE {p}lti_unit_test SET email=:new WHERE name='tsugi'";
      *     pdox.queryChanged(sql, {new:'tsugi@fred.com'}).then(
      *         function(retval) {
      *             console.log("UPDATE retval:",retval);
      *         }
      *     );
      *
-     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for 
      * the database prefix - must not be a SELECT
      * @param {object} data The key-value pairs for substitution (optional)
      */
@@ -227,13 +251,13 @@ class PDOX {
     /**
      * Run an INSERT and return the generated key, throw on error
      *
-     *     sql = "INSERT INTO {$p}lti_unit_test (name,email) 
+     *     sql = "INSERT INTO {p}lti_unit_test (name,email) 
      *            VALUES ('tsugi', 'tsugi@zap.com')";
      *     pdox.insertKey(sql).then( function(retval) {
      *          console.log("INSERT retval:",retval);
      *     });
      *
-     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for 
      * the database prefix - must be an INSERT to a table with 
      * an auto-increment field.
      * @param {object} data The key-value pairs for substitution (optional)
@@ -248,7 +272,7 @@ class PDOX {
      * This has more parameters and is typically used by methods with
      * simpler signatures.
      *
-     * @param {string} sql The SQL to use - it is ok to use {$p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for 
      * the database prefix - must not be SELECT.
      * @param {object} data The key-value pairs for substitution
      * @param {number} returnval What to return from the function.
@@ -256,18 +280,20 @@ class PDOX {
      * @param {boolean} dothrow Whether to throw or return the error
      */
     queryFull(sql, data=null, returnval=0, dothrow=false) {
-        // console.log("allRowsDie",sql); console.log("   ",data);
+        // console.log("queryFull",sql); console.log("   ",data);
         var deferred = Q.defer();
-        var sql = this.fixPrefix(sql);
+        sql = this.setPrefix(sql);
         this.cop().then( function(connection) {
+            sql = PDOX.substituteFields(connection, sql, data);
             connection.query(sql, data, function(err, result) {
                 if (err) {
-                    let myerror = 'Could not execute query '+sql;
-                    console.log(myerror);
+                    console.log('Could not execute query');
+                    console.log(sql);
                     console.log(data);
                     connection.release();
+                    let myerror = 'Could not execute query '+sql;
                     if ( dothrow )  throw myerror;
-                    deferred.reject('Could not execute query', sql);
+                    deferred.reject(myerror);
                 } else {
                     // console.log('query die returning rows:', rows.length);
                     connection.release();
