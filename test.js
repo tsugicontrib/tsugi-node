@@ -154,6 +154,8 @@ Tsugi.loadAllData(CFG, q).then( function(rows) {
         row = rows[0];
     }
     Tsugi.adjustData(CFG, row, q);
+    console.log("All adjusted");
+    console.log(row);
 });
 
 /*

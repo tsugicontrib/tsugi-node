@@ -64,6 +64,15 @@ class TsugiUtils {
     }
 
     /**
+     * Mimic the PHP isset
+     */
+    static isset(v) {
+        if ( typeof v == 'undefined') return false;
+        if ( v === null ) return false;
+        return true;
+    }
+
+    /**
      * Reduce non real values to null
      */
     static toNull(v) {
