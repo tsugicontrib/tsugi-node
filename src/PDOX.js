@@ -87,8 +87,10 @@ class PDOX {
                     console.log("   CREATE DATABASE tsugi DEFAULT CHARACTER SET utf8;");
                     console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'localhost' IDENTIFIED BY 'ltipassword';");
                     console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'127.0.0.1' IDENTIFIED BY 'ltipassword';");
+                    conn.release();
                     throw err;
                 }
+                conn.release();
                 console.log('Pool test success');
             })
         });
@@ -192,7 +194,7 @@ class PDOX {
      * Run a query and return the number of affected rows, throw on error
      *
      *     sql = "DELETE FROM {$p}lti_unit_test WHERE name='tsugi'";
-     *     CFG.pdox.queryChanged(sql).then( function(retval) {
+     *     CFG.pdox.query(sql).then( function(retval) {
      *          console.log("DELETE retval:",retval);
      *     });
      *
@@ -207,7 +209,8 @@ class PDOX {
     /**
      * Run a query and return the number of changed rows, throw on error
      *
-     *     CFG.pdox.queryChanged(sql,{new:'tsugi@fred.com'}).then(
+     *     sql = "UPDATE {$p}lti_unit_test SET email=:new WHERE name='tsugi'";
+     *     pdox.queryChanged(sql,{new:'tsugi@fred.com'}).then(
      *         function(retval) {
      *             console.log("UPDATE retval:",retval);
      *         });
@@ -225,7 +228,7 @@ class PDOX {
      *
      *     sql = "INSERT INTO {$p}lti_unit_test (name,email) 
      *            VALUES ('tsugi', 'tsugi@zap.com')";
-     *     CFG.pdox.insertKey(sql).then( function(retval) {
+     *     .pdox.insertKey(sql).then( function(retval) {
      *          console.log("INSERT retval:",retval);
      *     });
      *
