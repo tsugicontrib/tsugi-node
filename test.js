@@ -59,7 +59,6 @@ console.log('sha256("bob")',bob);
 
     function fakePostCore() {
         f = {};
-        f.user_id = "292832126";
         f.resource_link_id = "667587732";
         f.tool_consumer_info_product_family_code = "ims";
         f.tool_consumer_info_version = "1.1";
@@ -90,6 +89,7 @@ console.log('sha256("bob")',bob);
         f.context_id = "456434513";
         f.context_label = "SI106";
         f.context_title = "Introduction to Programming";
+        f.user_id = "292832126";
         f.lis_person_name_full = "Jane Instructor";
         f.lis_person_name_family = "Instructor";
         f.lis_person_name_given = "Jane";
@@ -103,7 +103,51 @@ console.log('sha256("bob")',bob);
         return f;
     }
 
+    function fakePost2() {
+        f = fakePostCore();
+        f.custom_courseoffering_sourcedid = "456434513";
+        f.custom_courseoffering_label = "SI106";
+        f.custom_courseoffering_title = "Introduction to Programming";
+        f.user_id = "292832126";
+        f.custom_person_name_full = "Jane Instructor";
+        f.custom_person_name_family = "Instructor";
+        f.custom_person_name_given = "Jane";
+        f.custom_person_contact_email_primary = "inst@ischool.edu";
+        f.custom_person_sourcedid = "ischool.edu:inst";
+        f.custom_result_url = "http://localhost:8888/tsugi/common/result.php?id=1234567";
+        f.custom_resourcelink_title = "Activity: attend";
+        f.custom_resourcelink_description = "A weekly blog.";
+        f.custom_result_comment = "Nice work";
+        f.custom_result_resultscore = "0.9";
+        f.custom_membership_role = "Instructor";
+        return f;
+    }
+   
+    function fakePost1s() {
+        f = fakePostCore();
+        f.context_id = "456434513";
+        f.context_label = "SI106";
+        f.context_title = "Introduction to Programming";
+        f.user_id = "292832126";
+        f.lis_person_name_full = "John Student";
+        f.lis_person_contact_email_primary = "john@ischool.edu";
+        f.lis_person_sourcedid = "ischool.edu:john";
+        f.lis_result_sourcedid = "99999999999999999999999999999999";
+        f.lis_outcome_service_url = "http://localhost:8888/tsugi/common/tool_consumer_outcome.php?b64=MTIzNDU6OjpzZWNyZXQ6Ojo=";
+        f.resource_link_title = "Activity: attend";
+        f.resource_link_description = "A weekly blog.";
+        f.roles = "Learner";
+        return f;
+    }
+
+
 p = fakePost1();
+q = Tsugi.extractPost(p);
+console.log(q);
+p = fakePost1s();
+q = Tsugi.extractPost(p);
+console.log(q);
+p = fakePost2();
 q = Tsugi.extractPost(p);
 console.log(q);
 /*
@@ -267,70 +311,6 @@ public class TsugiTest {
         }
     }
 
-    public static Properties fakePost1() {
-        Properties f = fakePostCore();
-        f.setProperty("context_id", "456434513");
-        f.setProperty("context_label", "SI106");
-        f.setProperty("context_title", "Introduction to Programming");
-        f.setProperty("lis_person_name_full", "Jane Instructor");
-        f.setProperty("lis_person_name_family", "Instructor");
-        f.setProperty("lis_person_name_given", "Jane");
-        f.setProperty("lis_person_contact_email_primary", "inst@ischool.edu");
-        f.setProperty("lis_person_sourcedid", "ischool.edu:inst");
-        f.setProperty("lis_result_sourcedid", "e10e575674e68bbcd873e2962f5a138b");
-        f.setProperty("lis_outcome_service_url", "http://localhost:8888/tsugi/common/tool_consumer_outcome.php?b64=MTIzNDU6OjpzZWNyZXQ6Ojo=");
-        f.setProperty("resource_link_title", "Activity: attend");
-        f.setProperty("resource_link_description", "A weekly blog.");
-        f.setProperty("roles", "Instructor");
-        return f;
-    }
-
-    public static Properties fakePost2() {
-        Properties f = fakePostCore();
-        f.setProperty("custom_courseoffering_sourcedid", "456434513");
-        f.setProperty("custom_courseoffering_label", "SI106");
-        f.setProperty("custom_courseoffering_title", "Introduction to Programming");
-        f.setProperty("custom_person_name_full", "Jane Instructor");
-        f.setProperty("custom_person_name_family", "Instructor");
-        f.setProperty("custom_person_name_given", "Jane");
-        f.setProperty("custom_person_contact_email_primary", "inst@ischool.edu");
-        f.setProperty("custom_person_sourcedid", "ischool.edu:inst");
-        f.setProperty("custom_result_url", "http://localhost:8888/tsugi/common/result.php?id=1234567");
-        f.setProperty("custom_resourcelink_title", "Activity: attend");
-        f.setProperty("custom_resourcelink_description", "A weekly blog.");
-        f.setProperty("custom_result_comment", "Nice work");
-        f.setProperty("custom_result_resultscore", "0.9");
-        f.setProperty("custom_membership_role", "Instructor");
-        return f;
-    }
-   
-    public static Properties fakePostCore() {
-        Properties f = new Properties();
-        f.setProperty("user_id", "292832126");
-        f.setProperty("resource_link_id", "667587732");
-        f.setProperty("tool_consumer_info_product_family_code", "ims");
-        f.setProperty("tool_consumer_info_version", "1.1");
-        f.setProperty("tool_consumer_instance_guid", "lmsng.ischool.edu");
-        f.setProperty("tool_consumer_instance_description", "University of Information");
-        f.setProperty("custom_assn", "mod/attend/index.php");
-        f.setProperty("custom_due", "2016-12-12 10:00:00.5");
-        f.setProperty("custom_timezone", "Pacific/Honolulu");
-        f.setProperty("custom_penalty_time", "86400");
-        f.setProperty("custom_penalty_cost", "0.2");
-        f.setProperty("oauth_callback", "about:blank");
-        f.setProperty("launch_presentation_css_url", "http://localhost:8888/tsugi/lms.css");
-        f.setProperty("lti_version", "LTI-1p0");
-        f.setProperty("lti_message_type", "basic-lti-launch-request");
-        f.setProperty("ext_submit", "Finish Launch");
-        f.setProperty("oauth_version", "1.0");
-        f.setProperty("oauth_nonce", "e5c4e475c39eb4d4223a232f99fbd39f");
-        f.setProperty("oauth_timestamp", "1433793103");
-        f.setProperty("oauth_consumer_key", unitTestKey);
-        f.setProperty("oauth_signature_method", "HMAC-SHA1");
-        f.setProperty("oauth_signature", "y21x1iiVNp2UmDNJRp/MYLsgkEM=");
-        f.setProperty("ext_submit", "Finish Launch");
-        return f;
-    }
 
 }
 */
