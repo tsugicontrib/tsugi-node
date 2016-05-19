@@ -7,15 +7,23 @@ var mysql = require("mysql");
  */
 class PDOX {
 
+    /**
+     * Create the database conection pools.
+     * @param {Config} Configuration object
+     */
     constructor(CFG) {
         /**
-         * A reference to the configuration object (private)
+         * A reference to the configuration object
+         *
+         * @private
          */
         this._CFG = CFG;  // Retain for leter
 
         /**
          * The database pool (private)
          * https://www.npmjs.com/package/mysql#pooling-connections
+         *
+         * @private
          */
         this._pool = null;
 
@@ -30,7 +38,7 @@ class PDOX {
         });
 
         // Test the pool (async - will fail later)
-        this.testPool(pool);
+        this._testPool(pool);
 
         this._pool = pool;
 
@@ -64,8 +72,10 @@ class PDOX {
      *
      *     connection.query("UPDATE posts SET title = :title", 
      *         { title: "Hello MySQL" });
+     *
+     * @private
      */
-    setupFormat(connection) {
+    _setupFormat(connection) {
         connection.config.queryFormat = function (query, values) {
             if (!values) return query;
             return query.replace(/\:(\w+)/g, function (txt, key) {
@@ -79,8 +89,10 @@ class PDOX {
      
     /**
      * Test the pool
+     *
+     * @private
      */
-    testPool(pool) {
+    _testPool(pool) {
         pool.getConnection(function(err, conn){
             conn.query("SELECT 1 + 1 AS solution", function(err, rows) {
                 if (err) {
@@ -99,7 +111,7 @@ class PDOX {
 
     /**
      * Get a connection promise from the pool
-     * Make sure to do a conn.release()
+     * Make sure to do a cop.release()
      *
      *     var thekey = '12345';
      *     pdox.cop.then( function(connection) {
@@ -117,7 +129,7 @@ class PDOX {
      */
     cop() {
         var deferred = Q.defer();
-        var setupFormat = this.setupFormat;
+        var setupFormat = this._setupFormat;
         this._pool.getConnection(function(err, connection) {
             if(err) {
                 deferred.reject(err);
@@ -133,7 +145,7 @@ class PDOX {
      * Run a query and return all the rows from the query and throw any error.
      *
      *     let sql = 'SELECT * FROM {$p}lti_key WHERE key_key = :key_key';
-     *     CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( 
+     *     pdox.allRowsDie(sql,{ key_key: thekey }).then( 
      *          function(rows) {
      *              console.log("Rows:",rows.length);
      *          }, 
@@ -154,7 +166,7 @@ class PDOX {
      * Run a query and return all the rows or an error from the query.
      *
      *     let sql = 'SELECT * FROM lti_key WHERE key_key = :key_key';
-     *     CFG.pdox.allRows(sql,{ key_key: thekey }, false).then( 
+     *     pdox.allRows(sql,{ key_key: thekey }, false).then( 
      *          function(rows) {
      *              console.log("Rows:",rows.length);
      *          }, 

@@ -18,6 +18,83 @@ CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
      }, function(reason) { console.log("Bummer",reason); } 
 );
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
+
+p1 = CFG.pdox.allRowsDie(sql,{ key_key: thekey });
+p2 = CFG.pdox.allRowsDie(sql,{ key_key: thekey });
+p3 = CFG.pdox.allRowsDie(sql,{ key_key: thekey });
+
+Promise.all([p1,p2,p3]).then(function(values) {
+    console.log("Promise.all done");
+}, function(reason) {
+    console.log("Bummer",reason);
+} );
+
+// Chaining... 
+// http://www.html5rocks.com/en/tutorials/es6/promises/
+var i = 0;
+var promise = new Promise(function(resolve, reject) {
+  resolve(42);
+});
+
+promise.then(function(p) {
+   console.log("0,p,i",p,i);
+   i = i + 1;
+   return(p+1);
+}).then(function(p) {
+   console.log("0,p,i",p,i);
+   i = i + 1;
+   return(p+1);
+}).then(function(p) {
+   console.log("0,p,i",p,i);
+   i = i + 1;
+   return(p+1);
+});
+
+var total = 0;
+console.log("Sequential Updates");
+
+var sequential = new Promise(function(resolve, reject) {
+  resolve(42);
+});
+
+// Parallel
+CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
+    total = total + 1;
+    console.log("AA Rows, total:",rows.length, total);
+});
+CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
+    total = total + 1;
+    console.log("BB Rows, total:",rows.length, total);
+});
+CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
+    total = total + 1;
+    console.log("CC Rows, total:",rows.length, total);
+});
+
+
+// sequential.then( function() {
+var s = new Promise(function(resolve, reject) {
+  resolve(42);
+});
+
+s.then(function() {
+    CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
+        total = total + 1;
+        console.log("AAA Rows, total:",rows.length, total);
+    }).then(function() {
+        CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
+            total = total + 1;
+            console.log("BBB Rows, total:",rows.length, total);
+        }).then(function() {
+            CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
+                total = total + 1;
+                console.log("CCC Rows, total:",rows.length, total);
+            });
+        });
+    });
+});
+
 /*
 
 public class TsugiTest {
