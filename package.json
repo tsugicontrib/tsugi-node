@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/csev/tsugi-node#readme",
   "devDependencies": {
-    "esdoc-node-plugin": "^0.2.1"
+    "esdoc-node-plugin": "^0.2.1",
+    "chai": ">=3.5.0"
   }
 }

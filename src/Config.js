@@ -159,4 +159,4 @@ class Config {
     get mailsecret() { return Crypto.decryptShortTerm(this._mailsecret); }
 }
     
-module.exports = new Config();
+module.exports = Config;

@@ -1,10 +1,9 @@
 
 // var CFG = require('./Config'); 
-var CFG = require('./src/Config'); 
+var Config = require('./src/Config'); 
+CFG = new Config();
 CFG.unitTesting = true;
 var Tsugi = require('./src/Tsugi');
-var TsugiUtils = require('./src/TsugiUtils');
-var Crypto = require('./src/Crypto'); 
 
 if ( CFG.unitTesting ) {
     console.log("Unit testing");
@@ -23,39 +22,6 @@ CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
          console.log("Rows:",rows.length);
      }, function(reason) { console.log("Bummer",reason); } 
 );
-
-sql = 'DROP TABLE IF EXISTS {p}lti_unit_test';
-CFG.pdox.query(sql).then( function(retval) {
-     console.log("drop retval:",retval);
-}).then( function() {
-sql = 'CREATE TABLE {p}lti_unit_test (id int NOT NULL AUTO_INCREMENT, name varchar(255), email varchar(255), PRIMARY KEY(id))';
-CFG.pdox.query(sql).then( function(retval) {
-     console.log("CREATE retval:",retval);
-}).then( function() {
-sql = "INSERT INTO {p}lti_unit_test (name,email) VALUES ('tsugi', 'tsugi@zap.com')";
-CFG.pdox.insertKey(sql).then( function(retval) {
-     console.log("INSERT retval:",retval);
-}).then( function() {
-sql = "UPDATE {p}lti_unit_test SET email=:new WHERE name='tsugi'";
-CFG.pdox.queryChanged(sql,{new:'tsugi@fred.com'}).then( function(retval) {
-     console.log("UPDATE retval:",retval);
-}).then( function() {
-sql = "SELECT * FROM {p}lti_unit_test";
-CFG.pdox.allRowsDie(sql).then( function(retval) {
-     console.log("SELECT retval:",retval);
-}).then( function() {
-sql = "DELETE FROM {p}lti_unit_test WHERE name='tsugi'";
-CFG.pdox.query(sql).then( function(retval) {
-     console.log("DELETE retval:",retval);
-});
-});
-});
-});
-});
-});
-
-let bob = Crypto.sha256('bob');
-console.log('sha256("bob")',bob);
 
     function fakePostCore() {
         f = {};
@@ -157,47 +123,6 @@ Tsugi.loadAllData(CFG, q).then( function(rows) {
     console.log("All adjusted");
     console.log(row);
 });
-
-/*
-TsugiUtils.emptyPromise(42).then( function(val) {
-    console.log("Empty 42 success:", val);
-}, function(val) {
-    console.log("Empty 42 fail:", val);
-});
-TsugiUtils.emptyPromiseFail(43).then( function(val) {
-    console.log("Empty 43 success:", val);
-}, function(val) {
-    console.log("Empty 43 fail:", val);
-});
-
-TsugiUtils.emptyPromise(44).then( function(val) {
-    console.log("Then 1 success:", val);
-    return 20;
-}, function(val) {
-    console.log("Then 1 fail (bad):", val);
-    return 21;
-}).then( function(val) {
-    console.log("Then 2 starting", val);
-    TsugiUtils.emptyPromiseFail(val).then( function(val) {
-        console.log("Then 2 success (bad):", val);
-        return 22;
-    // Note that if you *catch* the error, it does not break the then chain
-    // }, function(val) {
-        // console.log("Then 2 fail (good):", val);
-        // return 23;
-    }).then( function(val) {
-        console.log("Then 3 starting (bad)", val);
-    });
-});
-
-// Returning a promise from within a promise
-TsugiUtils.emptyPromise(52).then( function(val) {
-    console.log("Nested 0 success:", val);
-    return TsugiUtils.emptyPromise(53);
-}).then( function(val) {
-    console.log("Nested 1 success:", val);
-});
-*/
 
 /*
 

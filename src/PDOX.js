@@ -38,8 +38,9 @@ class PDOX {
         });
 
         // Test the pool (async - will fail later)
-        this._testPool(pool);
-
+        this._testPool(pool).then(function (message) {
+            console.log(message);
+        });
         this._pool = pool;
     }
 
@@ -101,6 +102,19 @@ class PDOX {
      * @private
      */
     _testPool(pool) {
+/*
+        var setupFormat = this._setupFormat;
+        this._pool.getConnection(function(err, connection) {
+            if(err) {
+                deferred.reject(err);
+            } else {
+                setupFormat(connection);
+                deferred.resolve(connection);
+            }
+        });
+        return deferred.promise;
+*/
+        var deferred = Q.defer();
         pool.getConnection(function(err, conn){
             conn.query("SELECT 1 + 1 AS solution", function(err, rows) {
                 if (err) {
@@ -111,12 +125,13 @@ class PDOX {
                     console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'localhost' IDENTIFIED BY 'ltipassword';");
                     console.log("   GRANT ALL ON tsugi.* TO 'ltiuser'@'127.0.0.1' IDENTIFIED BY 'ltipassword';");
                     conn.release();
-                    throw err;
+                    deferred.reject(err);
                 }
                 conn.release();
-                console.log('Pool test success');
+                deferred.resolve('Pool test success');
             })
         });
+        return deferred.promise;
     }
 
     /**
