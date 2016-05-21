@@ -38,9 +38,11 @@ class PDOX {
         });
 
         // Test the pool (async - will fail later)
+/*
         this._testPool(pool).then(function (message) {
             console.log(message);
         });
+*/
         this._pool = pool;
     }
 
@@ -102,18 +104,6 @@ class PDOX {
      * @private
      */
     _testPool(pool) {
-/*
-        var setupFormat = this._setupFormat;
-        this._pool.getConnection(function(err, connection) {
-            if(err) {
-                deferred.reject(err);
-            } else {
-                setupFormat(connection);
-                deferred.resolve(connection);
-            }
-        });
-        return deferred.promise;
-*/
         var deferred = Q.defer();
         pool.getConnection(function(err, conn){
             conn.query("SELECT 1 + 1 AS solution", function(err, rows) {

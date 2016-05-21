@@ -5,23 +5,11 @@ CFG = new Config();
 CFG.unitTesting = true;
 var Tsugi = require('./src/Tsugi');
 
-if ( CFG.unitTesting ) {
-    console.log("Unit testing");
-}
-
-console.log(CFG.dbpass);
 console.log(Tsugi);
 // launch = Tsugi.requireData(CFG, Tsugi.ALL);
 launch = Tsugi.requireData(CFG);
 console.log(launch);
 console.log(launch.user.id);
-
-let thekey = '12345';
-let sql = 'SELECT * FROM {p}lti_key WHERE key_key = :key_key';
-CFG.pdox.allRowsDie(sql,{ key_key: thekey }).then( function(rows) {
-         console.log("Rows:",rows.length);
-     }, function(reason) { console.log("Bummer",reason); } 
-);
 
     function fakePostCore() {
         f = {};
