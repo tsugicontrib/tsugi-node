@@ -100,6 +100,7 @@ p = fakePost2();
 q = Tsugi.extractPost(p);
 console.log(q);
 
+console.log("====== loadAllData");
 
 Tsugi.loadAllData(CFG, q).then( function(rows) {
     console.log("Data Rows: ", rows.length);
@@ -108,7 +109,7 @@ Tsugi.loadAllData(CFG, q).then( function(rows) {
         row = rows[0];
     }
     Tsugi.adjustData(CFG, row, q);
-    console.log("All adjusted");
+    console.log("====== All adjusted");
     console.log(row);
 });
 

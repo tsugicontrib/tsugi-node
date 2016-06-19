@@ -120,7 +120,7 @@ describe("Tsugi", function () {
         assert.equal(q.role, '1000');
     });
 
-    it('Should load all data correctly', function() {
+    it('Should load all data correctly', function(done) {
         let p = fakePost2();
         let q = Tsugi.extractPost(p);
         let x = Tsugi.loadAllData(CFG, q);
@@ -139,6 +139,7 @@ describe("Tsugi", function () {
             done();
         }, function(err) {
             console.log("WTF", err);
+            done(err);
         });
 
     });
