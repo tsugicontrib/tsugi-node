@@ -13,7 +13,7 @@ var Q = require("q");
  *      var CFG = require('./Config');
  *      var Tsugi = require('./src/Tsugi');
  *
- *      launch = Tsugi.requireData(CFG, Tsugi.ALL);
+ *      launch = Tsugi.requireData(CFG, req, res, session, Tsugi.ALL);
  *      if ( launch.complete ) return;
  */
 class Config {

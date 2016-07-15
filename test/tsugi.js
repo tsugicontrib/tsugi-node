@@ -91,7 +91,7 @@ describe("Tsugi", function () {
         CFG.unitTesting = true;
     });
 
-    it('Should descript the sql password', function() {
+    it('Should decript the sql password', function() {
         assert.equal(CFG.dbpass,'ltipassword');
     });
 

@@ -10,7 +10,7 @@ var Crypto = require("./Crypto");
  *      var CFG = require('./Config');
  *      var Tsugi = require('./src/Tsugi');
  *
- *      launch = Tsugi.requireData(CFG, Tsugi.ALL);
+ *      launch = Tsugi.requireData(CFG, req, res, session, Tsugi.ALL);
  *      if ( launch.complete ) return;
  */
 class Tsugi {
@@ -46,10 +46,18 @@ class Tsugi {
      * @param {ConfigSample} CFG A Tsugi Configuration object
      * @param {http.ClientRequest} req 
      * @param {http.ServerResponse} res 
+     * @param {*} A session object
+     * @param {*} needed Indicates which of
+     * the data structures are needed. If this is omitted,
+     * this assumes that CONTEXT, LINK, and USER data are required.
+     * If NONE is present, then none of the three are rquired.
+     * If some combination of the three are needed, this accepts
+     * an array of the CONTEXT, LINK, and USER
+     * can be passed in.
      *
      * @return Launch A Tsugi Launch object.
      */
-    setup(CFG, req, res) {
+    setup(CFG, req, res, session, needed=this.ALL) {
         return this.requireData(CFG, this.NONE);
     }
 
@@ -79,7 +87,7 @@ class Tsugi {
         }
         console.log(needed);
         let ns = new Set(needed);
-        console.log(ns.has("all"));
+        console.log(ns.has(this.ALL));
 
         let Launch = require('./Launch.js');
 
@@ -94,23 +102,32 @@ class Tsugi {
      * Extract the data from POST
      *
      * @param {object} i The input post data
+     * @param {*} needed Indicates which of
+     * the data structures are needed. If this is omitted,
+     * this assumes that CONTEXT, LINK, and USER data are required.
+     * If NONE is present, then none of the three are rquired.
+     * If some combination of the three are needed, this accepts
+     * an array of the CONTEXT, LINK, and USER
+     * can be passed in.
      * @type {object}
      */
-    extractPost(i) {
+    extractPost(i, needed=this.ALL) {
+
+
         let o = {};
         TsugiUtils.copy(o,"key_key",i,"oauth_consumer_key");
         TsugiUtils.copy(o,"nonce",i,"oauth_nonce");
+        if ( o.key_key == null || o.nonce == null ) return null;
+
         TsugiUtils.copy(o,"link_key",i,"resource_link_id");
         TsugiUtils.copy(o,"context_key",i,"context_id", "custom_courseoffering_sourcedid");
         TsugiUtils.copy(o,"user_key",i,"user_id","custom_person_sourcedid");
 
         // Test for the required parameters.
-        if ( o.key_key != null && o.nonce != null && o.context_key != null &&
-             o.link_key != null  && o.user_key != null  ) {
-            // OK To Continue
-        } else {
-            return null;
-        }
+        let ns = this.patchNeeded(needed);
+        if ( o.user_key == null && (ns.has(this.ALL) || ns.has(this.USER)) ) return null;
+        if ( o.context_key == null && (ns.has(this.ALL) || ns.has(this.CONTEXT)) ) return null;
+        if ( o.link_key == null && (ns.has(this.ALL) || ns.has(this.LIN)) ) return null;
 
         // LTI 1.x settings and Outcomes
         TsugiUtils.copy(o,"service",i,"lis_outcome_service_url");
@@ -510,6 +527,49 @@ class Tsugi {
         });
             
         
+    }
+
+    /**
+     * Patch the value for the list of needed features and return a Set
+     *
+     *     ns = this.patchNeeded(Tsugi.ALL)
+     *     console.log(ns.has(this.ALL));
+     * 
+     * or if you don't need link..
+     *
+     *     ns = this.patchNeeded([Tsugi.USER,Tsugi.CONTEXT]))
+     *     console.log(ns.has(this.ALL));
+     *
+     *
+     * Note - causes no harm if called more than once.
+     *
+     * @param {*} needed Indicates which of
+     * the data structures are needed. If this is omitted,
+     * this assumes that CONTEXT, LINK, and USER data are required.
+     * If NONE is present, then none of the three are rquired.
+     * If some combination of the three are needed, this accepts
+     * an array of the CONTEXT, LINK, and USER
+     * can be passed in.
+     *
+     * @return {Set} A set of the needed values
+     */
+    patchNeeded(needed) {
+
+        if ( needed instanceof Set ) return needed;
+
+        if ( needed == this.NONE ) return new Set();
+
+        if ( needed == this.ALL ) {
+            let ns = new Set([this.CONTEXT, this.USER, this.LINK]);
+            return ns;
+        }
+
+        if ( ! ( needed instanceof Array ) ) {
+            needed = [ needed ];
+        }
+        // console.log(needed);
+        let ns = new Set(needed);
+        return ns;
     }
 
 }
