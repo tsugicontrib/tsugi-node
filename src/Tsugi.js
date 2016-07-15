@@ -333,7 +333,6 @@ class Tsugi {
         }).then( function() {
             console.log("MEMBERSHIP HANDLING");
             if ( row.membership_id == null && row.context_id != null && row.user_id != null ) {
-                console.log("A");
                 let sql = `INSERT INTO {p}lti_membership
                     ( context_id, user_id, role, created_at, updated_at ) VALUES
                     ( :context_id, :user_id, :role, NOW(), NOW() )`;
@@ -342,11 +341,9 @@ class Tsugi {
                     user_id: row.user_id,
                     role: post.role
                 };
-                console.log("B");
                 return CFG.pdox.insertKey(sql, data).then( function(insertId) {
                     row.membership_id = insertId;
                     row.role = post.role;
-                console.log("C");
                     actions.push("=== Inserted membership id="+row.membership_id+" role="+row.role+
                         " user="+row.user_id+" context="+row.context_id);
                 });
@@ -508,7 +505,6 @@ class Tsugi {
         }).then( function() {
             // De-undefine the altered row data
             TsugiUtils.toNullAll(row);
-            console.log("ALL DONE");
             // console.log(row);
             if ( actions.length > 0 ) console.log("Actions", actions);
         });

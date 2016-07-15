@@ -17,7 +17,7 @@ Of course do this after downloading:
 
 To run test code:
 
-    node test.js
+    mocha
 
 It is not a server - more of a simple straight line test.   You can
 also run [nodemon](https://www.npmjs.com/package/nodemon) if you want it 
