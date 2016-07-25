@@ -8,12 +8,15 @@ class Launch {
     /**
      * @param {Config} Configuration settings
      */
-    constructor(CFG) {
+    constructor(CFG, req, res, session) {
         /**
          * The current conficuration
          * @type {Config}
          */
         this.CFG = CFG;
+        this.req = req;
+        this.res = res;
+        this.session = session;
 
         let User = require("./User.js");
 
@@ -27,17 +30,17 @@ class Launch {
     /**
      * Get the request associated with the launch.
      */
-    get request() { return 42; }
+    get request() { return this.req; }
 
     /**
      * Get the response associated with the launch.
      */
-    get response() { return 42; }
+    get response() { return this.res; }
 
     /**
      * Get the session associated with the launch.
      */
-    get session() { return 42; }
+    get session() { return this.session; }
 
     /**
      * Get the Context associated with the launch.

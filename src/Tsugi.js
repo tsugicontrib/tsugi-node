@@ -25,6 +25,11 @@ class Tsugi {
         this.LINK = "link_id";
         this.ALL = "all";
         this.NONE = "none";
+
+        /*
+         * Way to signal to the class that it is being exercised in a unit test.
+         */
+        this.unit_testing = false;
     }
 
     /**
@@ -40,7 +45,7 @@ class Tsugi {
      * 
      * Calling sequence:
      * 
-     *     launch = tsugi.setup(CFG, req, res);
+     *     launch = tsugi.setup(CFG, req, res, session);
      *     if (launch.complete) return;
      *
      * @param {ConfigSample} CFG A Tsugi Configuration object
@@ -57,7 +62,7 @@ class Tsugi {
      *
      * @return Launch A Tsugi Launch object.
      */
-    setup(CFG, req, res, session, needed=this.ALL) {
+    setup(CFG, req, res, session) {
         return this.requireData(CFG, this.NONE);
     }
 
@@ -69,8 +74,11 @@ class Tsugi {
      * die is there if no session_name() (PHPSESSID) cookie or
      * parameter.  No need to create any fresh sessions here.
      *
-     * @param {Config} CFG A Tsugi Configuration object
-     *
+     * @param {ConfigSample} CFG A Tsugi Configuration object
+     * @param {http.ClientRequest} req 
+     * @param {http.ServerResponse} res 
+     * @param {*} A session object
+     * @param {*} The body (i.e. POST data)
      * @param {*} needed Indicates which of
      * the data structures are needed. If this is omitted,
      * this assumes that CONTEXT, LINK, and USER data are required.
@@ -81,7 +89,8 @@ class Tsugi {
      * 
      * @return Launch A Tsugi Launch object.
      */
-    requireData(CFG, needed=this.ALL) {
+    requireData(CFG, req, res, body=null, session=null, needed=this.ALL) {
+
         if ( ! ( needed instanceof Array ) ) {
             needed = [ needed ];
         }
@@ -89,12 +98,117 @@ class Tsugi {
         let ns = new Set(needed);
         console.log(ns.has(this.ALL));
 
+        body = body || req.body || req.payload;
+        session = session || req.session ;
+
         let Launch = require('./Launch.js');
 
         /**
          * @type {Launch}
          */
-        let launch = new Launch(CFG);
+        let launch = new Launch(CFG, req, res, session);
+
+        if ( ! this.isRequest(body) ) {
+            if ( session == null ) {
+                launch.error = true;
+                launch.error_message = "This tool must be launched using LTI";
+                return launch;
+            }
+            sess_row = session.lti_row;
+            if ( sess_row == null ) {
+                launch.error = true;
+                launch.error_message = "This tool must be launched using LTI or have LTI data in session";
+                return launch;
+            }
+            launch.fill(sess_row);
+            return launch;
+        }
+
+        // Start fresh in the session
+        if ( session != null ) delete session.lti_row;
+
+        // Pull in the POST data
+        post = this.extractPost(body, needed);
+
+        if ( post == null ) {
+            console.log("Missing essential POST data");
+            launch.error_message = "Missing essential POST data";
+            launch.error = true;
+            return launch;
+        }
+
+        // Pull in whatever old data we have (including secret)
+        row = loadAllData(CFG, post);
+        if ( row == null ) {
+            console.log("Key not found "+row.key_key);
+            launch.error_message = "Key not found";
+            launch.error = true;
+            return launch;
+        }
+
+        let x = false;
+        let validated = false;
+        if ( req != null ) {
+            let key = row.key_key;
+            let secret = row.secret;
+            let new_secret = row.new_secret;
+
+            // checkOAuthSignature Returns three item array:
+            // [0] An error with member ".message" containing a textual message
+            // [1] true/false if it was validated
+            // [2] The base string or null
+            
+            if ( new_secret != null ) {
+                x = this.checkOAuthSignature(launch, key, new_secret);
+                validated = x[1];
+            }
+            if ( !validated && secret != null ) {
+                x = this.checkOAuthSignature(launch, key, secret);
+                validated = x[1];
+            }
+            if ( !validated ) {
+                console.log(x);
+                launch.error_message = x[0].message;
+                launch.error = true;
+                launch.base_string = x[2];
+                console.log("OAuth error: "+launch.error_message);
+                console.log("Base string: "+launch.base_string);
+
+                let returnUrl = launch.req.body.launch_presentation_return_url
+                if ( returnUrl ) {
+                    if ( returnUrl.indexOf('?') > 0 ) {
+                        returnUrl += '&';
+                    } else {
+                        returnUrl += '?';
+                    }
+                    returnUrl += 'lti_errormsg=' + encodeURIComponent(x[0].message);
+                    returnUrl += '&base_string=' + encodeURIComponent(x.base);
+                    console.log(returnUrl);
+                    launch.res.redirect(returnUrl);
+                    launch.complete = true;
+                    return launch;
+                }
+
+                launch.valid = false;
+                return launch;
+            }
+        } else if ( this.unit_testing ) {
+            console.log("HttpServletRequest is null - test only");
+        } else {
+            throw new Error("HttpServletRequest is required unless Tsugi.unit_testing = true");
+        }
+
+        adjustData(CFG, row, post);
+
+        lauch.fill(row);
+
+        if ( session != null ) {
+            session.lti_row = row;
+            console.log("Redirecting back to "+req.url);
+            res.redirect(req.url);
+            launch.complete = true;
+        }
+
         return launch;
     }
 
@@ -527,6 +641,44 @@ class Tsugi {
         });
             
         
+    }
+
+    /*
+     ** Returns true if this is an LTI message with minimum values to meet the protocol
+     *
+     * @param {*} needed Indicates which of
+     * 
+     */
+    isRequest(props) {
+        let vers = props.lti_version;
+        let mtype = props.lti_message_type;
+        if ( vers == null || mtype == null ) return false;
+
+        let good_message_type = mtype == ("basic-lti-launch-request" ||
+            mtype == "ToolProxyReregistrationRequest" ||
+            mtype == "ContentItemSelectionRequest");
+        let good_lti_version = (vers == "LTI-1p0" || vers == "LTI-2p0");
+
+        if (good_message_type && good_lti_version ) return true;
+        return false;
+    }
+
+    /*
+     ** Check the OAuth Signature
+     */
+    checkOAuthSignature(launch, key, secret) {
+        lti = require('tsugi-node-lti/lib/ims-lti.js');
+
+        // provider = new lti.Provider '12345', 'secret', [nonce_store=MemoryStore], [signature_method=HMAC_SHA1]
+        let provider = new lti.Provider (key, secret);
+
+        // Returns three item array:
+        // [0] An error with member ".message" containing a textual message
+        // [1] true/false if it was validated
+        // [2] The base string or null
+        let x = provider.valid_request(launch.req, launch.req.body, function(x,y,z) { return [x,y,z];} );
+
+        return x;
     }
 
     /**
