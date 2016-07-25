@@ -8,7 +8,7 @@ class Launch {
     /**
      * @param {Config} Configuration settings
      */
-    constructor(CFG, req, res, session) {
+    constructor(CFG, req, res, sess) {
         /**
          * The current conficuration
          * @type {Config}
@@ -16,7 +16,8 @@ class Launch {
         this.CFG = CFG;
         this.req = req;
         this.res = res;
-        this.session = session;
+        this.sess = sess;
+        this._complete = false;
 
         let User = require("./User.js");
 
@@ -25,6 +26,13 @@ class Launch {
          * @type {User}
          */
         this.user = new User(42);
+    }
+
+    /**
+     * Fill the data structures from the row data
+     */
+    fill(row) {
+        console.log("Fill TBD");
     }
 
     /**
@@ -107,7 +115,8 @@ class Launch {
      * This allows the Tsugi framework to do things like redirect back
      * to itself.
      */
-    get complete() { return 42; }
+    get complete() { return this._complete; }
+    set complete(complete) { this._complete = complete; }
 
     /**
      * Indicate if this request is valid

@@ -128,7 +128,6 @@ describe("Tsugi", function () {
         console.log("loadAllData returns",x);
         // Tsugi.loadAllData(CFG, q).then( function(rows) {
         x.then( function(rows) {
-            // This never happens in mocha for some reason
             console.log("Data Rows: ", rows.length);
             let row = {};
             if ( rows.length > 0 ) {
