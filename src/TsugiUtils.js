@@ -91,6 +91,18 @@ class TsugiUtils {
             row[key] = this.toNull(row[key]);
         }
     }
+
+    /**
+     * Get the full url for the request
+     *
+     * @param {dsdsljk} req The http request object
+     */
+    // http://stackoverflow.com/questions/10183291/how-to-get-the-full-url-in-express
+    static requestUrl(req) {
+        var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+        return fullUrl;
+    }
+
 }
 
 module.exports = TsugiUtils;

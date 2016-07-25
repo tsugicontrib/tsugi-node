@@ -111,13 +111,13 @@ class Tsugi {
         if ( ! this.isRequest(body) ) {
             if ( session == null ) {
                 launch.error = true;
-                launch.error_message = "This tool must be launched using LTI";
+                launch.message = "This tool must be launched using LTI";
                 return launch;
             }
             let sess_row = session.lti_row;
             if ( sess_row == null ) {
                 launch.error = true;
-                launch.error_message = "This tool must be launched using LTI or have LTI data in session";
+                launch.message = "This tool must be launched using LTI or have LTI data in session";
                 return launch;
             }
             launch.success = true;
@@ -136,7 +136,7 @@ class Tsugi {
 
         if ( post == null ) {
             console.log("Missing essential POST data");
-            launch.error_message = "Missing essential POST data";
+            launch.message = "Missing essential POST data";
             launch.error = true;
             return launch;
         }
@@ -148,13 +148,13 @@ class Tsugi {
             console.log("Data Rows: ", rows.length);
             if ( rows.length < 1 ) {
                 console.log("Key not found "+post.key_key);
-                launch.error_message = "Key not found";
+                launch.message = "Key not found";
                 launch.error = true;
                 return launch;
             }
             let row = rows[0];
 
-            // console.log('ROW',row);
+            console.log('ROW',row);
 
             let x = false;
             let validated = false;
@@ -162,7 +162,7 @@ class Tsugi {
                 let key = row.key_key;
                 let secret = row.secret;
                 let new_secret = row.new_secret;
-                // console.log("OAuth",key,secret,new_secret);
+                console.log("OAuth",key,secret,new_secret);
     
                 // checkOAuthSignature Returns three item array:
                 // [0] An error with member ".message" containing a textual message
@@ -177,14 +177,15 @@ class Tsugi {
                     x = topclass.checkOAuthSignature(launch, key, secret);
                     validated = x[1];
                 }
+
                 if ( !validated ) {
-                    launch.error_message = x[0].message;
+                    launch.message = x[0].message;
                     launch.error = true;
-                    launch.base_string = x[2];
-                    console.log("OAuth error: "+launch.error_message);
-                    console.log("Base string: "+launch.base_string);
+                    launch.base = x[2];
+                    console.log("OAuth error: "+launch.message);
+                    console.log("Base string: "+launch.base);
     
-                    let returnUrl = launch.req.body.launch_presentation_return_url
+                    let returnUrl = req.body.launch_presentation_return_url
                     if ( returnUrl ) {
                         if ( returnUrl.indexOf('?') > 0 ) {
                             returnUrl += '&';
@@ -192,14 +193,14 @@ class Tsugi {
                             returnUrl += '?';
                         }
                         returnUrl += 'lti_errormsg=' + encodeURIComponent(x[0].message);
-                        returnUrl += '&base_string=' + encodeURIComponent(x.base);
+                        returnUrl += '&base=' + encodeURIComponent(x.base);
                         console.log(returnUrl);
-                        launch.res.redirect(returnUrl);
+                        res.redirect(returnUrl);
                         launch.complete = true;
                         return launch;
                     }
     
-                    launch.valid = false;
+                    launch.success = false;
                     return launch;
                 }
             } else if ( this.unit_testing ) {
@@ -217,8 +218,10 @@ class Tsugi {
 
                 if ( session != null ) {
                     session.lti_row = row;
-                    console.log("Redirecting back to "+req.url);
-                    res.redirect(req.url);
+    console.log("ALSKJDSLKJDLJK");
+                    let redirect = TsugiUtils.requestUrl(req);
+                    console.log("Redirecting back to "+redirect);
+                    res.redirect(redirect);
                     launch.complete = true;
                 } else {
                     console.log("No session found");

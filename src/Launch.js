@@ -94,12 +94,12 @@ class Launch {
      * it is not restored when the launch is restored from 
      * the session.
      */
-    get base_string() { return 42; }
+    // get base_string() { return 42; }
 
     /**
      * Get the error message if something went wrong with the setup
      */
-    get error_message() { return 42; }
+    // get error_message() { return 42; }
 
     /**
      * Indicate if this request is completely handled
@@ -124,7 +124,7 @@ class Launch {
      * This fails if the LTI Launch was malformed or the session data
      * is corrupted.
      */
-    get valid() { return 42; }
+    // get valid() { return 42; }
 
     /** 
      * Get a GET URL to the current servlet
