@@ -76,7 +76,7 @@ class PDOX {
      *
      * https://www.npmjs.com/package/mysql#preparing-queries
      *
-     *     connection.query("UPDATE posts SET title = :title", 
+     *     connection.query("UPDATE posts SET title = :title",
      *         { title: "Hello MySQL" });
      *
      * @private
@@ -97,7 +97,7 @@ class PDOX {
             }.bind(this));
         };
      }
-     
+
     /**
      * Test the pool
      *
@@ -159,16 +159,16 @@ class PDOX {
      * Run a query and return all the rows from the query and throw any error.
      *
      *     let sql = 'SELECT * FROM {p}lti_key WHERE key_key = :key_key';
-     *     pdox.allRowsDie(sql,{ key_key: thekey }).then( 
+     *     pdox.allRowsDie(sql,{ key_key: thekey }).then(
      *          function(rows) {
      *              console.log("Rows:",rows.length);
-     *          }, 
-     *          function(reason) { 
-     *               console.log("Bummer",reason); 
+     *          },
+     *          function(reason) {
+     *               console.log("Bummer",reason);
      *          }
      *     );
      *
-     * @param {string} sql The SQL to use - it is ok to use {p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for
      * the database prefix.
      * @param {object} data The key-value pairs for substitution
      */
@@ -180,16 +180,16 @@ class PDOX {
      * Run a query and return all the rows or an error from the query.
      *
      *     let sql = 'SELECT * FROM lti_key WHERE key_key = :key_key';
-     *     pdox.allRows(sql,{ key_key: thekey }, false).then( 
+     *     pdox.allRows(sql,{ key_key: thekey }, false).then(
      *          function(rows) {
      *              console.log("Rows:",rows.length);
-     *          }, 
-     *          function(reason) { 
-     *               console.log("Bummer",reason); 
+     *          },
+     *          function(reason) {
+     *               console.log("Bummer",reason);
      *          }
      *     );
      *
-     * @param {string} sql The SQL to use - it is ok to use {p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for
      * the database prefix - must be SELECT
      * @param {object} data The key-value pairs for substitution
      * @param {boolean} dothrow Whether to throw or return the error
@@ -200,6 +200,7 @@ class PDOX {
         sql = this.setPrefix(sql);
         this.cop().then( function(connection) {
             sql = PDOX.substituteFields(connection, sql, data);
+
             connection.query(sql, data, function(err, rows, fields) {
                 if (err) {
                     console.log('Could not load data query');
@@ -215,6 +216,8 @@ class PDOX {
                     deferred.resolve(rows);
                 }
             });
+        }).catch (function (connectionError) {
+            deferred.reject (connectionError);
         });
         return deferred.promise;
     }
@@ -227,7 +230,7 @@ class PDOX {
      *          console.log("DELETE retval:",retval);
      *     });
      *
-     * @param {string} sql The SQL to use - it is ok to use {p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for
      * the database prefix - must not be a SELECT
      * @param {object} data The key-value pairs for substitution (optional)
      */
@@ -245,7 +248,7 @@ class PDOX {
      *         }
      *     );
      *
-     * @param {string} sql The SQL to use - it is ok to use {p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for
      * the database prefix - must not be a SELECT
      * @param {object} data The key-value pairs for substitution (optional)
      */
@@ -256,14 +259,14 @@ class PDOX {
     /**
      * Run an INSERT and return the generated key, throw on error
      *
-     *     sql = "INSERT INTO {p}lti_unit_test (name,email) 
+     *     sql = "INSERT INTO {p}lti_unit_test (name,email)
      *            VALUES ('tsugi', 'tsugi@zap.com')";
      *     pdox.insertKey(sql).then( function(retval) {
      *          console.log("INSERT retval:",retval);
      *     });
      *
-     * @param {string} sql The SQL to use - it is ok to use {p} for 
-     * the database prefix - must be an INSERT to a table with 
+     * @param {string} sql The SQL to use - it is ok to use {p} for
+     * the database prefix - must be an INSERT to a table with
      * an auto-increment field.
      * @param {object} data The key-value pairs for substitution (optional)
      */
@@ -277,7 +280,7 @@ class PDOX {
      * This has more parameters and is typically used by methods with
      * simpler signatures.
      *
-     * @param {string} sql The SQL to use - it is ok to use {p} for 
+     * @param {string} sql The SQL to use - it is ok to use {p} for
      * the database prefix - must not be SELECT.
      * @param {object} data The key-value pairs for substitution
      * @param {number} returnval What to return from the function.
@@ -311,9 +314,11 @@ class PDOX {
                     }
                 }
             });
+        }).catch (function (connectionError) {
+            deferred.reject (connectionError);
         });
         return deferred.promise;
     }
 }
-    
+
 module.exports = PDOX;
