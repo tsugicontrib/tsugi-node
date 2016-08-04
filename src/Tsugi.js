@@ -1,10 +1,10 @@
-
+var Q = require("q");
 var TsugiUtils = require("./TsugiUtils");
 var Crypto = require("./Crypto");
 
 /**
  *  The Tsugi class/namespace/Utilities
- * 
+ *
  *  Calling sequence in a NodeJS app:
  *
  *      var CFG = require('./Config');
@@ -18,7 +18,7 @@ class Tsugi {
     // http://stackoverflow.com/questions/32647215/declaring-static-constants-in-es6-classes
     constructor() {
         /**
-         * 
+         *
          */
         this.CONTEXT = "context_id";
         this.USER = "user_id";
@@ -39,18 +39,18 @@ class Tsugi {
      * and result data as it can including leaving them all null
      * if this is called on a request with no LTI launch and no LTI
      * data in the session.  This expects req.session to be properly
-     * set up as it may read and / or write session data.  If this 
+     * set up as it may read and / or write session data.  If this
      * encounters a LTI launch (POST) it might redirect and indicate
      * that this request is now complete.
-     * 
+     *
      * Calling sequence:
-     * 
+     *
      *     launch = tsugi.setup(CFG, req, res, session);
      *     if (launch.complete) return;
      *
      * @param {ConfigSample} CFG A Tsugi Configuration object
-     * @param {http.ClientRequest} req 
-     * @param {http.ServerResponse} res 
+     * @param {http.ClientRequest} req
+     * @param {http.ServerResponse} res
      * @param {*} A session object
      * @param {*} needed Indicates which of
      * the data structures are needed. If this is omitted,
@@ -75,8 +75,8 @@ class Tsugi {
      * parameter.  No need to create any fresh sessions here.
      *
      * @param {ConfigSample} CFG A Tsugi Configuration object
-     * @param {http.ClientRequest} req 
-     * @param {http.ServerResponse} res 
+     * @param {http.ClientRequest} req
+     * @param {http.ServerResponse} res
      * @param {*} A session object
      * @param {*} The body (i.e. POST data)
      * @param {*} needed Indicates which of
@@ -86,7 +86,7 @@ class Tsugi {
      * If some combination of the three are needed, this accepts
      * an array of the CONTEXT, LINK, and USER
      * can be passed in.
-     * 
+     *
      * @return Launch A Tsugi Launch object.
      */
     requireData(CFG, req, res, body=null, session=null, needed=this.ALL) {
@@ -163,12 +163,12 @@ class Tsugi {
                 let secret = row.secret;
                 let new_secret = row.new_secret;
                 console.log("OAuth",key,secret,new_secret);
-    
+
                 // checkOAuthSignature Returns three item array:
                 // [0] An error with member ".message" containing a textual message
                 // [1] true/false if it was validated
                 // [2] The base string or null
-             
+
                 if ( new_secret != null ) {
                     x = topclass.checkOAuthSignature(launch, key, new_secret);
                     validated = x[1];
@@ -184,7 +184,7 @@ class Tsugi {
                     launch.base = x[2];
                     console.log("OAuth error: "+launch.message);
                     console.log("Base string: "+launch.base);
-    
+
                     let returnUrl = req.body.launch_presentation_return_url
                     if ( returnUrl ) {
                         if ( returnUrl.indexOf('?') > 0 ) {
@@ -199,7 +199,7 @@ class Tsugi {
                         launch.complete = true;
                         return launch;
                     }
-    
+
                     launch.success = false;
                     return launch;
                 }
@@ -210,7 +210,7 @@ class Tsugi {
             }
 
             launch.success = true;
-    
+
             let adjust = topclass.adjustData(CFG, row, post);
             return adjust.then( function () {
 
@@ -339,28 +339,32 @@ class Tsugi {
     loadAllData(CFG, post)
     {
         let sql =
-            "SELECT k.key_id, k.key_key, k.secret, k.new_secret, c.settings_url AS key_settings_url, \n" +
-            "n.nonce, \n" +
-            "c.context_id, c.title AS context_title, context_sha256, c.settings AS context_settings, \n" +
-            "c.settings_url AS context_settings_url,\n"+
-            "l.link_id, l.title AS link_title, l.settings AS link_settings, l.settings_url AS link_settings_url,\n"+
-            "u.user_id, u.displayname AS user_displayname, u.email AS user_email, user_key,\n"+
-            "u.subscribe AS subscribe, u.user_sha256 AS user_sha256,\n"+
-            "m.membership_id, m.role, m.role_override,\n"+
-            "r.result_id, r.grade, r.note AS result_comment, r.result_url, r.sourcedid";
+            `SELECT k.key_id, k.key_key, k.secret, k.new_secret, c.settings_url AS key_settings_url,
+            n.nonce,
+            c.context_id, c.title AS context_title, context_sha256, c.settings AS context_settings,
+            c.settings_url AS context_settings_url,
+            l.link_id, l.title AS link_title, l.settings AS link_settings, l.settings_url AS link_settings_url,
+            u.user_id, u.displayname AS user_displayname, u.email AS user_email, user_key,
+            u.subscribe AS subscribe, u.user_sha256 AS user_sha256,
+            m.membership_id, m.role, m.role_override,
+            r.result_id, r.grade, r.note AS result_comment, r.result_url, r.sourcedid
+            `;
 
         if ( post["service"] != null ) {
-            sql += ",\n" +
-            "s.service_id, s.service_key AS service";
+            sql += `s.service_id, s.service_key AS service
+                   `;
         }
 
-        sql += "\nFROM {p}lti_key AS k\n" +
-            "LEFT JOIN {p}lti_nonce AS n ON k.key_id = n.key_id AND n.nonce = :nonce\n" + // :nonce 1
-            "LEFT JOIN {p}lti_context AS c ON k.key_id = c.key_id AND c.context_sha256 = :context\n" + // :context 2
-            "LEFT JOIN {p}lti_link AS l ON c.context_id = l.context_id AND l.link_sha256 = :link\n" + // :link 3
-            "LEFT JOIN {p}lti_user AS u ON k.key_id = u.key_id AND u.user_sha256 = :user\n" + // :user 4
-            "LEFT JOIN {p}lti_membership AS m ON u.user_id = m.user_id AND c.context_id = m.context_id\n" +
-            "LEFT JOIN {p}lti_result AS r ON u.user_id = r.user_id AND l.link_id = r.link_id";
+        sql +=
+            `FROM {p}lti_key AS k
+            LEFT JOIN {p}lti_nonce AS n ON k.key_id = n.key_id AND n.nonce = :nonce
+            LEFT JOIN {p}lti_context AS c ON k.key_id = c.key_id AND c.context_sha256 = :context
+            LEFT JOIN {p}lti_link AS l ON c.context_id = l.context_id AND l.link_sha256 = :link
+            LEFT JOIN {p}lti_user AS u ON k.key_id = u.key_id AND u.user_sha256 = :user
+            LEFT JOIN {p}lti_membership AS m ON u.user_id = m.user_id AND c.context_id = m.context_id
+            LEFT JOIN {p}lti_result AS r ON u.user_id = r.user_id AND l.link_id = r.link_id
+            `; //  :nonce 1 :context 2 :link 3 :user 4
+
 
         // Note that extractPost() insures these fields all exist in post
         let data = {nonce: post.nonce,
@@ -370,14 +374,16 @@ class Tsugi {
                 key: Crypto.sha256(post.key_key) };
 
         if ( post["service"] != null ) {
-            sql += "\n"+
-            "LEFT JOIN {p}lti_service AS s ON k.key_id = s.key_id AND s.service_sha256 = :service"; // :service 5
+            sql += `LEFT JOIN {p}lti_service AS s ON k.key_id = s.key_id AND s.service_sha256 = :service
+                   ` // :service 5
+
             data.service = Crypto.sha256(post.service);
         }
 
-        sql += "\nWHERE k.key_sha256 = :key LIMIT 1\n";  // :key 6 or 5
+        sql += `WHERE k.key_sha256 = :key LIMIT 1
+               `;  // :key 6 or 5
 
-        // console.log(sql);
+        //console.log(sql);
         // console.log(data);
 
         // Return a promise of a query.
@@ -414,260 +420,316 @@ class Tsugi {
         let actions = [];
         let oldserviceid = row.service_id;
 
-        return TsugiUtils.emptyPromise().then( function() {
-            console.log("CONTEXT HANDLING");
-            if ( row.context_id == null) {
-                let sql = `INSERT INTO {p}lti_context
-                    ( context_key, context_sha256, settings_url, title, key_id, created_at, updated_at ) VALUES
-                    ( :context_key, :context_sha256, :settings_url, :title, :key_id, NOW(), NOW() )`;
+        function contextHandling () {
+          console.log("CONTEXT HANDLING");
 
-                let data = {
-                    context_key: post.context_key,
-                    context_sha256: Crypto.sha256(post.context_key),
-                    settings_url: post.context_settings_url,
-                    title: post.context_title,
-                    key_id: row.key_id
-                };
+          if ( row.context_id == null) {
 
-                return CFG.pdox.insertKey(sql, data).then( function(insertId) {
-                    row.context_id = insertId;
-                    row.context_title = post.context_title;
-                    row.context_settings_url = post.context_settings_url;
-                    actions.push("=== Inserted context id="+row.context_id+" "+row.context_title);
-                });
-            } 
-        }).then( function() {
-            console.log("LINK HANDLING");
-            if ( row.link_id == null) {
-                let sql = `INSERT INTO {p}lti_link
-                    ( link_key, link_sha256, settings_url, title, context_id, created_at, updated_at ) VALUES
-                    ( :link_key, :link_sha256, :settings_url, :title, :context_id, NOW(), NOW() )`;
+              let sql = `INSERT INTO {p}lti_context
+                  ( context_key, context_sha256, settings_url, title, key_id, created_at, updated_at ) VALUES
+                  ( :context_key, :context_sha256, :settings_url, :title, :key_id, NOW(), NOW() )`;
 
-                let data = {
-                    link_key: post.link_key,
-                    link_sha256: Crypto.sha256(post.link_key),
-                    settings_url: post.link_settings_url,
-                    title: post.link_title,
-                    context_id: row.context_id,
-                    key_id: row.key_id
-                };
+              let data = {
+                  context_key: post.context_key,
+                  context_sha256: Crypto.sha256(post.context_key),
+                  settings_url: post.context_settings_url,
+                  title: post.context_title,
+                  key_id: row.key_id
+              };
 
-                return CFG.pdox.insertKey(sql, data).then( function(insertId) {
-                    row.link_id = insertId;
-                    row.link_title = post.link_title;
-                    row.link_settings_url = post.link_settings_url;
-                    actions.push("=== Inserted link id="+row.link_id+" "+row.link_title);
-                });
-            } 
-        }).then( function() {
-            console.log("USER HANDLING");
-            if ( row.user_id == null) {
-                let sql = `INSERT INTO {p}lti_user
-                    ( user_key, user_sha256, displayname, email, key_id, created_at, updated_at ) VALUES
-                    ( :user_key, :user_sha256, :displayname, :email, :key_id, NOW(), NOW() )`;
+              return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                  row.context_id = insertId;
+                  row.context_title = post.context_title;
+                  row.context_settings_url = post.context_settings_url;
+                  actions.push("=== Inserted context id="+row.context_id+" "+row.context_title);
+              });
+          }
+        };
 
-                let data = {
-                    user_key: post.user_key,
-                    user_sha256: Crypto.sha256(post.user_key),
-                    displayname: post.user_displayname,
-                    email: post.user_email,
-                    key_id: row.key_id
-                };
+        function linkHandling () {
+          console.log("LINK HANDLING");
+          if ( row.link_id == null) {
+              let sql = `INSERT INTO {p}lti_link
+                  ( link_key, link_sha256, settings_url, title, context_id, created_at, updated_at ) VALUES
+                  ( :link_key, :link_sha256, :settings_url, :title, :context_id, NOW(), NOW() )`;
 
-                return CFG.pdox.insertKey(sql, data).then( function(insertId) {
-                    row.user_id = insertId;
-                    row.user_displayname = post.user_displayname;
-                    row.email = post.email;
-                    actions.push("=== Inserted user id="+row.user_id+" "+row.user_displayname);
-                });
-            } 
-        }).then( function() {
-            console.log("MEMBERSHIP HANDLING");
-            if ( row.membership_id == null && row.context_id != null && row.user_id != null ) {
-                let sql = `INSERT INTO {p}lti_membership
-                    ( context_id, user_id, role, created_at, updated_at ) VALUES
-                    ( :context_id, :user_id, :role, NOW(), NOW() )`;
-                let data = {
-                    context_id: row.context_id,
-                    user_id: row.user_id,
-                    role: post.role
-                };
-                return CFG.pdox.insertKey(sql, data).then( function(insertId) {
-                    row.membership_id = insertId;
-                    row.role = post.role;
-                    actions.push("=== Inserted membership id="+row.membership_id+" role="+row.role+
-                        " user="+row.user_id+" context="+row.context_id);
-                });
-            }
-        }).then( function() {
-            // We need to handle the case where the service URL changes but we already have a sourcedid
-            // This is for LTI 1.x only as service is not used for LTI 2.x
-            console.log("SERVICE HANDLING");
-            if ( TsugiUtils.isset(post.service)) {
-                if ( row.service_id === null && post.service ) {
-                    let sql = `INSERT INTO {p}lti_service
-                        ( service_key, service_sha256, key_id, created_at, updated_at ) VALUES
-                        ( :service_key, :service_sha256, :key_id, NOW(), NOW() )`;
-                    let data = {
-                        service_key: post.service,
-                        service_sha256: Crypto.sha256(post.service),
-                        key_id: row.key_id
-                    };
-                    return CFG.pdox.insertKey(sql, data).then( function(insertId) {
-                        row.service_id = insertId;
-                        row.service = post.service;
-                        actions.push( "=== Inserted service id="+row.service_id+" "+post.service);
-                    });
-                }
-            }
-        }).then( function() {
-            // If we just created a new service entry but we already had a result entry, update it
-            // This is for LTI 1.x only as service is not used for LTI 2.x
-            console.log("RESULT TO SERVICE HANDLING");
-            if ( TsugiUtils.isset(post.service)) {
-                if ( oldserviceid === null && row.result_id !== null && row.service_id !== null && post.service ) {
-                    let sql = "UPDATE {p}lti_result SET service_id = :service_id WHERE result_id = :result_id";
-                    let data = {
-                        service_id: row.service_id,
-                        result_id: row.result_id
-                    };
-                    return CFG.pdox.query(sql, data).then( function() {
-                        actions.push( "=== Updated result id="+row.result_id+" service="+row.service_id);
-                    });
-                }
-            }  
-        }).then( function() {
-            // console.log("RESULT HANDLING");
-            // We always insert a result row if we have a link - we will store
-            // grades locally in this row - even if we cannot send grades
-            if ( row.result_id == null && row.link_id != null && row.user_id != null ) {
-                let sql = `INSERT INTO {p}lti_result
-                    ( link_id, user_id, created_at, updated_at ) VALUES
-                    ( :link_id, :user_id, NOW(), NOW() )`;
-                let data = {
-                    link_id: row.link_id,
-                    user_id: row.user_id
-                };
-                return CFG.pdox.insertKey(sql, data).then( function(insertId) {
-                    row.result_id = insertId;
-                    actions.push( "=== Inserted result id="+row.result_id);
-                });
-           }
-        }).then( function() {
-            console.log("POST TWEAKS");
-            // Set these values to null if they were not in the post
-            if ( ! TsugiUtils.isset(post.sourcedid) ) post.sourcedid = null;
-            if ( ! TsugiUtils.isset(post.service) ) post.service = null;
-            if ( ! TsugiUtils.isset(post.result_url) ) post.result_url = null;
-            if ( ! TsugiUtils.isset(row.service) ) {
-                row.service = null;
-                row.service_id = null;
-            }
-        }).then( function() {
-            console.log("RESULT UPDATE");
-            // Here we handle updates to sourcedid or result_url including if we
-            // just inserted the result row
-            if ( row.result_id != null &&
-                (post.sourcedid != row.sourcedid || post.result_url != row.result_url ||
-                post.service != row.service )
-            ) {
-                let sql = `UPDATE {p}lti_result
-                    SET sourcedid = :sourcedid, result_url = :result_url, service_id = :service_id
-                    WHERE result_id = :result_id`;
-                let data = {
-                    result_url: post.result_url,
-                    sourcedid: post.sourcedid,
-                    service_id: row.service_id,
-                    result_id: row.result_id
-                };
-                return CFG.pdox.query(sql, data).then( function() {
-                    row.sourcedid = post.sourcedid;
-                    row.service = post.service;
-                    row.result_url = post.result_url;
-                    actions.push( "=== Updated result id="+row.result_id+" result_url="+row.result_url+
-                    " sourcedid="+row.sourcedid+" service_id="+row.service_id);
-                });
-            }
-        }).then( function() {
-            console.log("UPDATING CONTEXT");
-            if ( TsugiUtils.isset(post.context_title) && post.context_title != row.context_title ) {
-                let sql = `UPDATE {p}lti_context SET title = :title WHERE context_id = :context_id`;
-                let data = {
-                    title: post.context_title,
-                    context_id: row.context_id
-                };
-                return CFG.pdox.query(sql, data).then( function() {
-                    row.context_title = post.context_title;
-                    actions.push( "=== Updated context="+row.context_id+" title="+post.context_title);
-                });
-            }
-        }).then( function() {
-            console.log("UPDATING LINK");
-            if ( TsugiUtils.isset(post.link_title) && post.link_title != row.link_title ) {
-                let sql = "UPDATE {p}lti_link SET title = :title WHERE link_id = :link_id";
-                let data = {
-                    title: post.link_title,
-                    link_id: row.link_id
-                };
-                return CFG.pdox.query(sql, data).then( function() {
-                    row.link_title = post.link_title;
-                    actions.push( "=== Updated link="+row.link_id+" title="+post.link_title);
-                });
-            }
-        }).then( function() {
-            console.log("UPDATING USER");
-            if ( TsugiUtils.isset(post.user_displayname) && post.user_displayname != row.user_displayname && post.user_displayname.length > 0 ) {
-                let sql = "UPDATE {p}lti_user SET displayname = :displayname WHERE user_id = :user_id";
-                let data = {
-                    displayname: post.user_displayname,
-                    user_id: row.user_id
-                };
-                return CFG.pdox.query(sql, data).then( function() {
-                    row.user_displayname = post.user_displayname;
-                    actions.push( "=== Updated user="+row.user_id+" displayname="+post.user_displayname);
-                });
-            }
-        }).then( function() {
-            console.log("UPDATING EMAIL");
-            if ( TsugiUtils.isset(post.user_email) && post.user_email != row.user_email && post.user_email.length > 0 ) {
-                let sql = "UPDATE {p}lti_user SET email = :email WHERE user_id = :user_id";
-                let data = {
-                    email: post.user_email,
-                    user_id: row.user_id
-                };
-                return CFG.pdox.query(sql, data).then( function() {
-                    row.user_email = post.user_email;
-                    actions.push( "=== Updated user="+row.user_id+" email="+post.user_email);
-                });
-            }
-        }).then( function() {
-            console.log("UPDATING ROLE");
-            if ( TsugiUtils.isset(post.role) && post.role != row.role ) {
-                let sql = "UPDATE {p}lti_membership SET role = :role WHERE membership_id = :membership_id";
-                let data = {
-                    role: post.role,
-                    membership_id: row.membership_id
-                };
-                return CFG.pdox.query(sql, data).then( function() {
-                    row.role = post.role;
-                    actions.push( "=== Updated membership="+row.membership_id+" role="+post.role);
-                });
-            }
-        }).then( function() {
-            // De-undefine the altered row data
-            TsugiUtils.toNullAll(row);
-            // console.log(row);
-            if ( actions.length > 0 ) console.log("Actions", actions);
+              let data = {
+                  link_key: post.link_key,
+                  link_sha256: Crypto.sha256(post.link_key),
+                  settings_url: post.link_settings_url,
+                  title: post.link_title,
+                  context_id: row.context_id,
+                  key_id: row.key_id
+              };
+
+              return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                  row.link_id = insertId;
+                  row.link_title = post.link_title;
+                  row.link_settings_url = post.link_settings_url;
+                  actions.push("=== Inserted link id="+row.link_id+" "+row.link_title);
+              });
+          }
+        };
+
+        function userHandling () {
+          console.log("USER HANDLING");
+          if ( row.user_id == null) {
+              let sql = `INSERT INTO {p}lti_user
+                  ( user_key, user_sha256, displayname, email, key_id, created_at, updated_at ) VALUES
+                  ( :user_key, :user_sha256, :displayname, :email, :key_id, NOW(), NOW() )`;
+
+              let data = {
+                  user_key: post.user_key,
+                  user_sha256: Crypto.sha256(post.user_key),
+                  displayname: post.user_displayname,
+                  email: post.user_email,
+                  key_id: row.key_id
+              };
+
+              return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                  row.user_id = insertId;
+                  row.user_displayname = post.user_displayname;
+                  row.email = post.email;
+                  actions.push("=== Inserted user id="+row.user_id+" "+row.user_displayname);
+              });
+          }
+        };
+
+        function membershipHandling () {
+          console.log("MEMBERSHIP HANDLING");
+          if ( row.membership_id == null && row.context_id != null && row.user_id != null ) {
+              let sql = `INSERT INTO {p}lti_membership
+                  ( context_id, user_id, role, created_at, updated_at ) VALUES
+                  ( :context_id, :user_id, :role, NOW(), NOW() )`;
+              let data = {
+                  context_id: row.context_id,
+                  user_id: row.user_id,
+                  role: post.role
+              };
+              return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                  row.membership_id = insertId;
+                  row.role = post.role;
+                  actions.push("=== Inserted membership id="+row.membership_id+" role="+row.role+
+                      " user="+row.user_id+" context="+row.context_id);
+              });
+          }
+        };
+
+        function serviceHandling (){
+          // We need to handle the case where the service URL changes but we already have a sourcedid
+          // This is for LTI 1.x only as service is not used for LTI 2.x
+          console.log("SERVICE HANDLING");
+          if ( TsugiUtils.isset(post.service)) {
+              if ( row.service_id === null && post.service ) {
+                  let sql = `INSERT INTO {p}lti_service
+                      ( service_key, service_sha256, key_id, created_at, updated_at ) VALUES
+                      ( :service_key, :service_sha256, :key_id, NOW(), NOW() )`;
+                  let data = {
+                      service_key: post.service,
+                      service_sha256: Crypto.sha256(post.service),
+                      key_id: row.key_id
+                  };
+                  return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                      row.service_id = insertId;
+                      row.service = post.service;
+                      actions.push( "=== Inserted service id="+row.service_id+" "+post.service);
+                  });
+              }
+          }
+        };
+
+        function resultToServiceHandling () {
+          console.log("RESULT TO SERVICE HANDLING");
+          if ( TsugiUtils.isset(post.service)) {
+              if ( oldserviceid === null && row.result_id !== null && row.service_id !== null && post.service ) {
+                  let sql = "UPDATE {p}lti_result SET service_id = :service_id WHERE result_id = :result_id";
+                  let data = {
+                      service_id: row.service_id,
+                      result_id: row.result_id
+                  };
+                  return CFG.pdox.query(sql, data).then( function() {
+                      actions.push( "=== Updated result id="+row.result_id+" service="+row.service_id);
+                  });
+              }
+          }
+        };
+
+        function resultHandling () {
+          // console.log("RESULT HANDLING");
+          // We always insert a result row if we have a link - we will store
+          // grades locally in this row - even if we cannot send grades
+          if ( row.result_id == null && row.link_id != null && row.user_id != null ) {
+              let sql = `INSERT INTO {p}lti_result
+                  ( link_id, user_id, created_at, updated_at ) VALUES
+                  ( :link_id, :user_id, NOW(), NOW() )`;
+              let data = {
+                  link_id: row.link_id,
+                  user_id: row.user_id
+              };
+              return CFG.pdox.insertKey(sql, data).then( function(insertId) {
+                  row.result_id = insertId;
+                  actions.push( "=== Inserted result id="+row.result_id);
+              });
+         }
+        };
+
+        function postTweeks () {
+          console.log("POST TWEAKS");
+          // Set these values to null if they were not in the post
+          if ( ! TsugiUtils.isset(post.sourcedid) ) post.sourcedid = null;
+          if ( ! TsugiUtils.isset(post.service) ) post.service = null;
+          if ( ! TsugiUtils.isset(post.result_url) ) post.result_url = null;
+          if ( ! TsugiUtils.isset(row.service) ) {
+              row.service = null;
+              row.service_id = null;
+          }
+        }
+
+        function resultUpdate () {
+          console.log("RESULT UPDATE");
+          // Here we handle updates to sourcedid or result_url including if we
+          // just inserted the result row
+
+          if ( row.result_id != null &&
+              (post.sourcedid != row.sourcedid || post.result_url != row.result_url ||
+              post.service != row.service )
+          ) {
+              let sql = `UPDATE {p}lti_result
+                  SET sourcedid = :sourcedid, result_url = :result_url, service_id = :service_id
+                  WHERE result_id = :result_id`;
+              let data = {
+                  result_url: post.result_url,
+                  sourcedid: post.sourcedid,
+                  service_id: row.service_id,
+                  result_id: row.result_id
+              };
+              return CFG.pdox.query(sql, data).then( function() {
+                  row.sourcedid = post.sourcedid;
+                  row.service = post.service;
+                  row.result_url = post.result_url;
+                  actions.push( "=== Updated result id="+row.result_id+" result_url="+row.result_url+
+                  " sourcedid="+row.sourcedid+" service_id="+row.service_id);
+              });
+          }
+        };
+
+        function updateContext () {
+          console.log("UPDATING CONTEXT");
+
+          if ( TsugiUtils.isset(post.context_title) && post.context_title != row.context_title ) {
+              let sql = `UPDATE {p}lti_context SET title = :title WHERE context_id = :context_id`;
+              let data = {
+                  title: post.context_title,
+                  context_id: row.context_id
+              };
+              return CFG.pdox.query(sql, data).then( function() {
+                  row.context_title = post.context_title;
+                  actions.push( "=== Updated context="+row.context_id+" title="+post.context_title);
+              });
+          }
+        };
+
+        function updateLink () {
+          console.log("UPDATING LINK");
+
+          if ( TsugiUtils.isset(post.link_title) && post.link_title != row.link_title ) {
+              let sql = "UPDATE {p}lti_link SET title = :title WHERE link_id = :link_id";
+              let data = {
+                  title: post.link_title,
+                  link_id: row.link_id
+              };
+              return CFG.pdox.query(sql, data).then( function() {
+                  row.link_title = post.link_title;
+                  actions.push( "=== Updated link="+row.link_id+" title="+post.link_title);
+              });
+          }
+        };
+
+        function updateUser() {
+          console.log("UPDATING USER");
+
+          if ( TsugiUtils.isset(post.user_displayname) && post.user_displayname != row.user_displayname && post.user_displayname.length > 0 ) {
+              let sql = "UPDATE {p}lti_user SET displayname = :displayname WHERE user_id = :user_id";
+              let data = {
+                  displayname: post.user_displayname,
+                  user_id: row.user_id
+              };
+              return CFG.pdox.query(sql, data).then( function() {
+                  row.user_displayname = post.user_displayname;
+                  actions.push( "=== Updated user="+row.user_id+" displayname="+post.user_displayname);
+              });
+          }
+        };
+
+        function updateEmail () {
+          console.log("UPDATING EMAIL");
+
+          if ( TsugiUtils.isset(post.user_email) && post.user_email != row.user_email && post.user_email.length > 0 ) {
+              let sql = "UPDATE {p}lti_user SET email = :email WHERE user_id = :user_id";
+              let data = {
+                  email: post.user_email,
+                  user_id: row.user_id
+              };
+              return CFG.pdox.query(sql, data).then( function() {
+                  row.user_email = post.user_email;
+                  actions.push( "=== Updated user="+row.user_id+" email="+post.user_email);
+              });
+          }
+        };
+
+        function updateRole (){
+          console.log("UPDATING ROLE");
+
+          if ( TsugiUtils.isset(post.role) && post.role != row.role ) {
+              let sql = "UPDATE {p}lti_membership SET role = :role WHERE membership_id = :membership_id";
+              let data = {
+                  role: post.role,
+                  membership_id: row.membership_id
+              };
+              return CFG.pdox.query(sql, data).then( function() {
+                  row.role = post.role;
+                  actions.push( "=== Updated membership="+row.membership_id+" role="+post.role);
+              });
+          }
+        };
+
+        var adjustSequence = Q.defer();
+
+        TsugiUtils.emptyPromise()
+        .then(contextHandling)
+        .then(linkHandling)
+        .then(userHandling)
+        .then(membershipHandling)
+        .then(serviceHandling)
+        .then(resultToServiceHandling)
+        .then(resultHandling)
+        .then(postTweeks)
+        .then(resultUpdate)
+        .then(updateContext)
+        .then(updateLink)
+        .then(updateUser)
+        .then(updateEmail)
+        .then(updateRole)
+        .then(function (){
+          // De-undefine the altered row data
+          TsugiUtils.toNullAll(row);
+          // console.log(row);
+          if ( actions.length > 0 ) console.log("Actions", actions);
+          adjustSequence.resolve(row);
+        })
+        .catch (function (error){
+            console.log (error);
+            adjustSequence.reject();
         });
-            
-        
+
+        return adjustSequence.promise;
     }
 
     /*
      ** Returns true if this is an LTI message with minimum values to meet the protocol
      *
      * @param {*} needed Indicates which of
-     * 
+     *
      */
     isRequest(props) {
         let vers = props.lti_version;
@@ -709,7 +771,7 @@ class Tsugi {
      *
      *     ns = this.patchNeeded(Tsugi.ALL)
      *     console.log(ns.has(this.ALL));
-     * 
+     *
      * or if you don't need link..
      *
      *     ns = this.patchNeeded([Tsugi.USER,Tsugi.CONTEXT]))
@@ -750,4 +812,3 @@ class Tsugi {
 }
 
 module.exports = new Tsugi();
-
