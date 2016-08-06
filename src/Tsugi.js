@@ -91,6 +91,8 @@ class Tsugi {
      */
     requireData(CFG, req, res, body=null, session=null, needed=this.ALL) {
 
+        let reqData = Q.defer();
+
         if ( ! ( needed instanceof Array ) ) {
             needed = [ needed ];
         }
@@ -108,85 +110,78 @@ class Tsugi {
          */
         let launch = new Launch(CFG, req, res, session);
 
-        if ( ! this.isRequest(body) ) {
-            if ( session == null ) {
-                launch.error = true;
-                launch.message = "This tool must be launched using LTI";
-                return launch;
-            }
+        if (!this.isRequest(body)) {
+          if (session == null) {
+            reqData.reject ('This tool must be launched using LTI')
+          } else {
             let sess_row = session.lti_row;
-            if ( sess_row == null ) {
-                launch.error = true;
-                launch.message = "This tool must be launched using LTI or have LTI data in session";
-                return launch;
+
+            if (sess_row == null) {
+              reqData.reject ('This tool must be launched using LTI or have LTI data in session');
+            } else {
+              launch.success = true;
+              launch.fill(sess_row);
+              reqData.resolve(launch);
             }
-            launch.success = true;
-            launch.fill(sess_row);
-            return TsugiUtils.emptyPromise(launch);
-        }
+          }
+        } else { //This already is a valid request
 
-        // Start fresh in the session
-        if ( session != null ) delete session.lti_row;
+          // Start fresh in the session
+          if ( session != null ) delete session.lti_row;
 
-        // Pull in the POST data
-        // console.log('BODY',body);
-        let post = this.extractPost(body, needed);
+          // Pull in the POST data
+          let post = this.extractPost(body, needed);
 
-        // console.log('POST',post);
+          if ( post == null ) {
+              reqData.reject('Missing essential POST data');
+          } else {
+            // Pull in whatever old data we have (including secret)
+            let topclass = this;
 
-        if ( post == null ) {
-            console.log("Missing essential POST data");
-            launch.message = "Missing essential POST data";
-            launch.error = true;
-            return launch;
-        }
+            this.loadAllData(CFG, post).then(function(rows) {
+                console.log("Data Rows: ", rows.length);
 
-        // Pull in whatever old data we have (including secret)
-        let load = this.loadAllData(CFG, post);
-        let topclass = this;
-        return load.then( function(rows) {
-            console.log("Data Rows: ", rows.length);
-            if ( rows.length < 1 ) {
-                console.log("Key not found "+post.key_key);
-                launch.message = "Key not found";
-                launch.error = true;
-                return launch;
-            }
-            let row = rows[0];
+                if ( rows.length < 1 ) {
+                    console.log("Key not found "+post.key_key);
+                    reqData.reject ('Key not found');
+                } else {
 
-            console.log('ROW',row);
+                  let row = rows[0];
 
-            let x = false;
-            let validated = false;
-            if ( req != null ) {
-                let key = row.key_key;
-                let secret = row.secret;
-                let new_secret = row.new_secret;
-                console.log("OAuth",key,secret,new_secret);
+                  console.log('ROW',row);
 
-                // checkOAuthSignature Returns three item array:
-                // [0] An error with member ".message" containing a textual message
-                // [1] true/false if it was validated
-                // [2] The base string or null
+                  let x = false;
+                  let validated = false;
 
-                if ( new_secret != null ) {
-                    x = topclass.checkOAuthSignature(launch, key, new_secret);
-                    validated = x[1];
-                }
-                if ( !validated && secret != null ) {
-                    x = topclass.checkOAuthSignature(launch, key, secret);
-                    validated = x[1];
-                }
+                  if ( req != null ) {
+                    let key = row.key_key;
+                    let secret = row.secret;
+                    let new_secret = row.new_secret;
+                    console.log("OAuth",key,secret,new_secret);
 
-                if ( !validated ) {
-                    launch.message = x[0].message;
-                    launch.error = true;
-                    launch.base = x[2];
-                    console.log("OAuth error: "+launch.message);
-                    console.log("Base string: "+launch.base);
+                    // checkOAuthSignature Returns three item array:
+                    // [0] An error with member ".message" containing a textual message
+                    // [1] true/false if it was validated
+                    // [2] The base string or null
 
-                    let returnUrl = req.body.launch_presentation_return_url
-                    if ( returnUrl ) {
+                    if ( new_secret != null ) {
+                        x = topclass.checkOAuthSignature(launch, key, new_secret);
+                        validated = x[1];
+                    }
+                    if ( !validated && secret != null ) {
+                        x = topclass.checkOAuthSignature(launch, key, secret);
+                        validated = x[1];
+                    }
+
+                    if ( !validated ) {
+                      launch.message = x[0].message;
+                      launch.error = true;
+                      launch.base = x[2];
+                      console.log("OAuth error: "+launch.message);
+                      console.log("Base string: "+launch.base);
+
+                      let returnUrl = req.body.launch_presentation_return_url
+                      if ( returnUrl ) {
                         if ( returnUrl.indexOf('?') > 0 ) {
                             returnUrl += '&';
                         } else {
@@ -197,39 +192,46 @@ class Tsugi {
                         console.log(returnUrl);
                         res.redirect(returnUrl);
                         launch.complete = true;
-                        return launch;
+
+                        //Althoug is an error lets return a valid result to be processd as complete response (redirect)
+                        reqData.resolve (launch);
+                      }
                     }
+                  } else if ( this.unit_testing ) {
+                      console.log("HttpServletRequest is null - test only");
+                  } else {
+                      throw new Error("HttpServletRequest is required unless Tsugi.unit_testing = true");
+                  }
 
-                    launch.success = false;
-                    return launch;
+                  launch.success = true;
+
+                  let adjust = topclass.adjustData(CFG, row, post);
+                  adjust.then( function () {
+
+                      launch.fill(row);
+
+                      if ( session != null ) {
+                          session.lti_row = row;
+
+                          let redirect = TsugiUtils.requestUrl(req);
+                          console.log("Redirecting back to "+redirect);
+                          res.redirect(redirect);
+                          launch.complete = true;
+                          reqData.resolve (launch);
+                      } else {
+                          reqdata.reject('No session found');
+                      }
+                  }).catch (function (adjustError){
+                    reqData.reject (adjustError);
+                  });
                 }
-            } else if ( this.unit_testing ) {
-                console.log("HttpServletRequest is null - test only");
-            } else {
-                throw new Error("HttpServletRequest is required unless Tsugi.unit_testing = true");
-            }
-
-            launch.success = true;
-
-            let adjust = topclass.adjustData(CFG, row, post);
-            return adjust.then( function () {
-
-                launch.fill(row);
-
-                if ( session != null ) {
-                    session.lti_row = row;
-    console.log("ALSKJDSLKJDLJK");
-                    let redirect = TsugiUtils.requestUrl(req);
-                    console.log("Redirecting back to "+redirect);
-                    res.redirect(redirect);
-                    launch.complete = true;
-                } else {
-                    console.log("No session found");
-                }
-
-                return launch;
-            } );
-        } );
+              })
+              .catch (function (error){ //loadData went wrong
+                reqData.reject (error);
+              });
+          }
+      }
+      return reqData.promise;
     }
 
     /**
