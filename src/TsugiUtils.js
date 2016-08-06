@@ -12,7 +12,7 @@ class TsugiUtils {
      * This is controlled by a global variable:
      *
      *   var TSUGI_UNIT_TEST=true;
-     * 
+     *
      * @type {boolean}
      */
     static unitTesting()
@@ -23,7 +23,7 @@ class TsugiUtils {
     /**
      * Copy a property from one list to another
      */
-    static copy(to, to_key, from, from_key=null, from_key_2=null) 
+    static copy(to, to_key, from, from_key=null, from_key_2=null)
     {
         if ( to_key == null) return;
         if ( from_key == null ) from_key = to_key;
@@ -106,4 +106,3 @@ class TsugiUtils {
 }
 
 module.exports = TsugiUtils;
-

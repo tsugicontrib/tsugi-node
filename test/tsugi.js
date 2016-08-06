@@ -69,7 +69,7 @@ function fakePost2() {
     f.custom_membership_role = "Instructor";
         return f;
 }
-   
+
 function fakePost1s() {
     f = fakePostCore();
     f.context_id = "456434513";
@@ -124,25 +124,26 @@ describe("Tsugi", function () {
     it('Should load all data correctly', function(done) {
         let p = fakePost2();
         let q = Tsugi.extractPost(p);
-        let x = Tsugi.loadAllData(CFG, q);
-        console.log("loadAllData returns",x);
-        // Tsugi.loadAllData(CFG, q).then( function(rows) {
-        x.then( function(rows) {
+
+        let x = Tsugi.loadAllData(CFG, q).then (function(rows) {
             console.log("Data Rows: ", rows.length);
             let row = {};
+
             if ( rows.length > 0 ) {
                 row = rows[0];
             }
-            Tsugi.adjustData(CFG, row, q);
-            console.log("All adjusted");
-            console.log(row);
-            done();
-        }, function(err) {
-            console.log("WTF", err);
+            
+            return Tsugi.adjustData(CFG, row, q);
+        }).then (function (row){
+          console.log("All adjusted");
+          console.log(row);
+          done();
+        })
+        .catch ( function(err) {
+            console.log("Error loading all data", err);
             done(err);
         });
 
     });
 
 });
-
