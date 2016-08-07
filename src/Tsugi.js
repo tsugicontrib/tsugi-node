@@ -353,7 +353,7 @@ class Tsugi {
             `;
 
         if ( post["service"] != null ) {
-            sql += `s.service_id, s.service_key AS service
+            sql += `, s.service_id, s.service_key AS service
                    `;
         }
 
