@@ -193,7 +193,7 @@ class Tsugi {
                         res.redirect(returnUrl);
                         launch.complete = true;
 
-                        //Althoug is an error lets return a valid result to be processd as complete response (redirect)
+                        //Although is an error lets return a valid result to be processd as complete response (redirect)
                         reqData.resolve (launch);
                       }
                     }

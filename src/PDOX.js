@@ -208,8 +208,12 @@ class PDOX {
                     console.log(data);
                     connection.release();
                     let myerror = 'Could not load data query '+sql;
-                    if ( dothrow )  throw myerror;
-                    deferred.reject(myerror);
+                    if ( dothrow )  {
+                      deferred.reject(myerror);
+                    } else {
+                      deferred.resolve(myerror);
+                    }
+
                 } else {
                     // console.log('query die returning rows:', rows.length);
                     connection.release();
@@ -300,8 +304,11 @@ class PDOX {
                     console.log(data);
                     connection.release();
                     let myerror = 'Could not execute query '+sql;
-                    if ( dothrow )  throw myerror;
-                    deferred.reject(myerror);
+                    if ( dothrow )  {
+                      deferred.reject(myerror);
+                    } else {
+                      deferred.resolve(myerror);
+                    }
                 } else {
                     // console.log('query die returning rows:', rows.length);
                     connection.release();
