@@ -1,14 +1,14 @@
 var Q = require("q");
-var TsugiUtils = require("./TsugiUtils");
-var Crypto = require("./Crypto");
+var TsugiUtils = require("../util/TsugiUtils");
+var Crypto = require("../util/Crypto");
 
 /**
  *  The Tsugi class/namespace/Utilities
  *
  *  Calling sequence in a NodeJS app:
  *
- *      var CFG = require('./Config');
- *      var Tsugi = require('./src/Tsugi');
+ *      var CFG = require('./src/config/Config');
+ *      var Tsugi = require('./src/core/Tsugi');
  *
  *      launch = Tsugi.requireData(CFG, req, res);
  *      if ( launch.complete ) return;

@@ -1,6 +1,6 @@
 var assert = require('chai').assert;
 
-var Crypto = require('../src/Crypto');
+var Crypto = require('../src/util/Crypto');
 
 let bob = Crypto.sha256('bob');
 
@@ -11,4 +11,3 @@ describe('Crypto', function() {
     });
   });
 });
-

@@ -1,7 +1,7 @@
 var assert = require('chai').assert;
 
-var Config = require('../src/Config');
-var Tsugi = require('../src/Tsugi');
+var Config = require('../src/config/Config');
+var Tsugi = require('../src/core/Tsugi');
 Tsugi.unit_testing = true;
 var CFG = null;
 
@@ -132,11 +132,12 @@ describe("Tsugi", function () {
             if ( rows.length > 0 ) {
                 row = rows[0];
             }
-            
+
             return Tsugi.adjustData(CFG, row, q);
         }).then (function (row){
           console.log("All adjusted");
           console.log(row);
+
           done();
         })
         .catch ( function(err) {

@@ -1,92 +1,109 @@
 
-package org.tsugi;
-
-import java.sql.Connection;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;;
+let User = require('./User'),
+    Settings = require ('./Settings')
+    Context = require ('./Context');
 
 /**
  * This captures all of the data associated with the LTI Launch.
  */
 
-public interface Launch {
+class Launch {
 
     /**
-     * Get the HttpRequest associated with the launch.
+     * @param {Config} Configuration settings
      */
-    public HttpServletRequest getRequest();
+    constructor(CFG, req, res, sess) {
+        /**
+         * The current conficuration
+         * @type {Config}
+         */
+        this.CFG = CFG;
+        this.req = req;
+        this.res = res;
+        this.sess = sess;
+        this._complete = false;
+
+
+
+        /**
+         * The current user
+         * @type {User}
+         */
+        this.user = new User(42);
+    }
 
     /**
-     * Get the HttpResponse associated with the launch.
+     * Fill the data structures from the row data
      */
-    public HttpServletResponse getResponse();
+    fill(row) {
+        this._context = new Context (row.context_id, row.context_title,new Settings());
+    }
 
     /**
-     * Get the HttpSession associated with the launch.
+     * Get the request associated with the launch.
      */
-    public HttpSession getSession();
+    get request() { return this.req; }
 
     /**
-     * Get the User associated with the launch.
+     * Get the response associated with the launch.
      */
-    public User getUser();
+    get response() { return this.res; }
+
+    /**
+     * Get the session associated with the launch.
+     */
+    get session() { return this.session; }
 
     /**
      * Get the Context associated with the launch.
+     *
+     * @return {Context} the user
      */
-    public Context getContext();
+    get context() { return this._context; }
 
     /**
      * Get the Link associated with the launch.
      */
-    public Link getLink();
+    get link() { return 42; }
 
     /**
      * Get the Result associated with the launch.
      */
-    public Result getResult();
+    get result() { return 42; }
 
     /**
      * Get the Service associated with the launch.
      */
-    public Service getService();
+    get service() { return 42; }
 
     /**
      * Return the database connection used by Tsugi.
      */
-    public Connection getConnection();
+    get connection() { return 42; }
 
     /**
      * Return the database prefix used by Tsugi.
      */
-    public String getPrefix();
-
-    // Deprecated for now
-    // /**
-    //  * Return the database helper class used by Tsugi.
-    //  */
-    // public Database DB();
+    get prefix() { return 42; }
 
     /**
      * Return the database helper class used by Tsugi.
      */
-    public Output getOutput();
+    get output() { return 42; }
 
     /**
      * Get the base string from the launch.
      *
      * @return This is null if it is not the original launch.
-     * it is not restored when the launch is restored from 
+     * it is not restored when the launch is restored from
      * the session.
      */
-    public String getBaseString();
+    // get base_string() { return 42; }
 
     /**
      * Get the error message if something went wrong with the setup
      */
-    public String getErrorMessage();
+    // get error_message() { return 42; }
 
     /**
      * Indicate if this request is completely handled
@@ -94,7 +111,7 @@ public interface Launch {
      * This is used as follows:
      *
      *<pre><code>
-     *      public void doPost (...)
+     *      get void doPost (...)
      *      Launch launch = tsugi.getLaunch(req, res);
      *      if ( launch.isComplete() ) return;
      *</code></pre>
@@ -102,7 +119,8 @@ public interface Launch {
      * This allows the Tsugi framework to do things like redirect back
      * to itself.
      */
-    public boolean isComplete();
+    get complete() { return this._complete; }
+    set complete(complete) { this._complete = complete; }
 
     /**
      * Indicate if this request is valid
@@ -110,33 +128,39 @@ public interface Launch {
      * This fails if the LTI Launch was malformed or the session data
      * is corrupted.
      */
-    public boolean isValid();
+    // get valid() { return 42; }
 
-    /** 
+    /**
      * Get a GET URL to the current servlet
      *
-     * We abstract this in case the framework needs to 
+     * We abstract this in case the framework needs to
      * point to a URL other than the URL in the request
      * object.  This URL should be used for AJAX calls
      * to dynamic data in JavaScript.
-     **/
-    public String getGetUrl(String path);
+     *
+     * @param {string} path
+     */
+    getGetUrl(path) { return 42; }
 
-    /** 
+    /**
      * Get a POST URL to the current servlet
      *
-     * We abstract this in case the framework needs to 
+     * We abstract this in case the framework needs to
      * point to a URL other than the URL in the request
      * object.
+     *
+     * @param {string} path
      **/
-    public String getPostUrl(String path);
+    getPostUrl(path) { return 42; }
 
-    /** 
-     * Redirect to a path - can be bull
+    /**
+     * Redirect to a path - can be null
+     *
+     * @param {string} path
      **/
-    public void postRedirect(String path);
+    postRedirect(path) { return 42; }
 
-    /** 
+    /**
      * Get any needed hidden form fields
      *
      * This will be properly formatted HTML - most likely one
@@ -144,23 +168,25 @@ public interface Launch {
      * may use this to help it maintain context across
      * request / response cycles.
      *
-     * @return String Text to include in a form.  May be the 
+     * @return {string} Text to include in a form.  May be the
      * empty string if nothing is needed by the framework.
      **/
-    public String getHidden();
+    get getHidden() { return 42; }
 
-    /** 
+    /**
      * Get a URL to the 'static' folder within this servlet
      *
      * We abstract this because this might be stored in a
-     * CDN for this application. 
+     * CDN for this application.
      * TODO: Define the property for this
      **/
-    public String getStaticUrl();
+    get getStaticUrl() { return 42; }
 
-    /** 
+    /**
      * Get a URL to a system-wide spinner image
      **/
-    public String getSpinnerUrl();
+    get getSpinnerUrl() { return 42; }
 
 }
+
+module.exports = Launch;

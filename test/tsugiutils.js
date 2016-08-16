@@ -1,6 +1,6 @@
 
 
-var TsugiUtils = require('../src/TsugiUtils');
+var TsugiUtils = require('../src/util/TsugiUtils');
 
 describe('TsugiUtils', function() {
   it('emptyPromise', function () {

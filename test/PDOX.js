@@ -2,7 +2,7 @@ var assert = require('chai').assert;
 
 var expect = require('chai').expect;
 
-var Config = require('../src/Config');
+var Config = require('../src/config/Config');
 var CFG = null;
 
 let sql = '';
