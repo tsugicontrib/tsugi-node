@@ -1,6 +1,6 @@
 
-var Crypto = require("./Crypto");
-var PDOX = require("./PDOX");
+var Crypto = require("../util/Crypto");
+var PDOX = require("../util/PDOX");
 var Q = require("q");
 
 /**

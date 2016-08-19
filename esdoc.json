@@ -2,7 +2,7 @@
   "source": "./src",
   "destination": "./esdoc",
   "plugins": [
-    {"name": "./plugin.js", 
+    {"name": "./plugin.js",
      "note": "https://github.com/esdoc/esdoc/issues/168"},
     { "name": "esdoc-node-plugin", "option": {
      "base": ".",
