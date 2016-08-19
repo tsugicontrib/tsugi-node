@@ -1,7 +1,13 @@
 
-let User = require('./User'),
-    Settings = require ('./Settings')
-    Context = require ('./Context');
+let Settings = require ('./Settings'),
+    Service = require ('./Service'),
+    Result = require ('./Result'),
+    Context = require ('./Context'),
+    Link = require ('./Link'),
+    Key = require ('./Key'),
+    User = require ('./User'),
+    TsugiUtils = require ('../util/TsugiUtils'),
+    util = require ('util')
 
 /**
  * This captures all of the data associated with the LTI Launch.
@@ -23,20 +29,67 @@ class Launch {
         this.sess = sess;
         this._complete = false;
 
-
-
-        /**
-         * The current user
-         * @type {User}
-         */
-        this.user = new User(42);
     }
 
     /**
      * Fill the data structures from the row data
      */
     fill(row) {
-        this._context = new Context (row.context_id, row.context_title,new Settings());
+      let service = null;
+
+      if (TsugiUtils.isset(row)) {
+
+        if (row.service_id) {
+          service = new Service (row.service_id, row.service);
+        }
+
+        //Fill the result data
+
+        let sgrade = TsugiUtils.toNull(row.grade);
+        let grade = null;
+
+        if (TsugiUtils.isset(sgrade)) {
+            grade = parseFloat (sgrade);
+        }
+
+        this._result = new Result (
+          row.result_id,
+          grade,
+          TsugiUtils.toNull (row.result_comment),
+          TsugiUtils.toNull (row.result_url),
+          TsugiUtils.toNull (row.sourcedid),
+          service
+        );
+
+      //Creates the link object
+      this._link = new Link (row.link_id, row.link_title, this._result, new Settings());
+
+      //Creates the context object
+      this._context = new Context (row.context_id, row.context_title, new Settings());
+
+      //Creates the user object
+      this._user = new User (
+          row.user_id,
+          TsugiUtils.toNull (row.user_email),
+          TsugiUtils.toNull (row.user_displayname),
+          parseInt (row.role,10)
+      );
+
+      //Creates the key object
+      this._key = new Key (
+        row.key_id,
+        null
+      );
+
+      /*
+        console.log (` The objects:
+          ${util.inspect (this._user)}
+          ${util.inspect (this._context)}
+          ${util.inspect (this._link)}
+          ${util.inspect (this._key)}
+          `);
+      */
+      }
     }
 
     /**
@@ -52,7 +105,7 @@ class Launch {
     /**
      * Get the session associated with the launch.
      */
-    get session() { return this.session; }
+    get session() { return this.sess; }
 
     /**
      * Get the Context associated with the launch.
@@ -64,22 +117,22 @@ class Launch {
     /**
      * Get the Link associated with the launch.
      */
-    get link() { return 42; }
+    get link() { return this._link; }
 
     /**
      * Get the Result associated with the launch.
      */
-    get result() { return 42; }
+    get result() { return this._result; }
 
     /**
      * Get the Service associated with the launch.
      */
-    get service() { return 42; }
+    get service() { return this._service; }
 
     /**
      * Return the database connection used by Tsugi.
      */
-    get connection() { return 42; }
+    get connection() { return this; }
 
     /**
      * Return the database prefix used by Tsugi.
