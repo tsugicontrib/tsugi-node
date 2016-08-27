@@ -82,6 +82,15 @@ class TsugiUtils {
     }
 
     /**
+     * Reduce non real values and empty strings to null
+     */
+    static trimToNull(v) {
+        let value = this.toNull(v);
+        return (value != null && value.length > 0) ? value : null;
+    }
+
+
+    /**
      * Reduce non real values to null for an object
      *
      * @param {object} v
