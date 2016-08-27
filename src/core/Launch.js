@@ -62,10 +62,29 @@ class Launch {
         );
 
       //Creates the link object
-      this._link = new Link (row.link_id, row.link_title, this._result, new Settings());
+      this._link = new Link (row.link_id,
+        row.link_title,
+        this._result,
+        new Settings(this.CFG,
+          row.link_id,
+          row.link_settings_url,
+          row.link_settings,
+          'link',
+          this.req
+        )
+      );
 
       //Creates the context object
-      this._context = new Context (row.context_id, row.context_title, new Settings());
+      this._context = new Context (row.context_id,
+        row.context_title,
+        new Settings(this.CFG,
+          row.context_id,
+          row.context_settings_url,
+          row.context_settings,
+          'context',
+          this.req
+        )
+      );
 
       //Creates the user object
       this._user = new User (
@@ -81,6 +100,7 @@ class Launch {
         null
       );
 
+
       /*
         console.log (` The objects:
           ${util.inspect (this._user)}
@@ -88,7 +108,7 @@ class Launch {
           ${util.inspect (this._link)}
           ${util.inspect (this._key)}
           `);
-      */
+        */
       }
     }
 
@@ -128,16 +148,6 @@ class Launch {
      * Get the Service associated with the launch.
      */
     get service() { return this._service; }
-
-    /**
-     * Return the database connection used by Tsugi.
-     */
-    get connection() { return this; }
-
-    /**
-     * Return the database prefix used by Tsugi.
-     */
-    get prefix() { return 42; }
 
     /**
      * Return the database helper class used by Tsugi.

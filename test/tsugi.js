@@ -2,6 +2,10 @@ var assert = require('chai').assert;
 
 var Config = require('../src/config/Config');
 var Tsugi = require('../src/core/Tsugi');
+var Launch = require('../src/core/Launch');
+var Settings = require('../src/core/Settings');
+
+
 Tsugi.unit_testing = true;
 var CFG = null;
 
@@ -141,10 +145,37 @@ describe("Tsugi", function () {
           done();
         })
         .catch ( function(err) {
-            console.log("Error loading all data", err);
+            console.log("Error loading all data: ", err);
             done(err);
         });
 
     });
 
+    it('Should persist settings', function(done) {
+      let p = fakePost2();
+      let q = Tsugi.extractPost(p);
+
+      let x = Tsugi.loadAllData(CFG, q).then (function(rows) {
+        if ( rows.length > 0 ) {
+            row = rows[0];
+        }
+
+        return Tsugi.adjustData(CFG, row, q);
+      }).then (function (row) {
+        let launch = new Launch (CFG, null, null, null);
+        launch.fill (row);
+
+        //Let's change tsugi settings
+        let contextSettings = launch.context.settings;
+
+        contextSettings.setSetting ('demo_setting','some_value').then (function () {
+            console.log ('Settings saved');
+            done();
+        });
+
+      }).catch (function (error) {
+        console.log("Error saving settings: ", err);
+        done(err);
+      });
+    });
 });
