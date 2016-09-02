@@ -13,6 +13,7 @@ var Crypto = require("../util/Crypto");
  *      launch = Tsugi.requireData(CFG, req, res);
  *      if ( launch.complete ) return;
  */
+
 class Tsugi {
 
     // http://stackoverflow.com/questions/32647215/declaring-static-constants-in-es6-classes
@@ -148,7 +149,7 @@ class Tsugi {
 
                   let row = rows[0];
 
-                  console.log('ROW',row);
+                  //console.log('ROW',row);
 
                   let x = false;
                   let validated = false;

@@ -3,6 +3,7 @@ var Crypto = require("../util/Crypto");
 var PDOX = require("../util/PDOX");
 var Q = require("q");
 
+
 /**
  * This is a sample of the configuration file.  Copy this to
  * Config.js in the top directory and edit all the values to
@@ -10,37 +11,66 @@ var Q = require("q");
  *
  *  Calling sequence in a NodeJS app:
  *
- *      var CFG = require('./Config');
- *      var Tsugi = require('./src/Tsugi');
+ *      var config  = require('tsugi-node/src/core/Config'),
+ *          CFG     = new Config ();
+ *      var Tsugi   = require('tsugi-node/src/core/Tsugi');
  *
  *      launch = Tsugi.requireData(CFG, req, res, session, Tsugi.ALL);
  *      if ( launch.complete ) return;
  */
 class Config {
 
-    constructor() {
+    /**
+    * @param {Object} [configuration] Object to initialize the public properties with alternative values.
+    * Look at public properties to see which properties can be overrided.
+    * @example
+    *
+    * var config = new Config ({
+    *     'dbport': '3306',
+    *     'dbhost': 'mydomain.com'
+    *  });
+    *
+    */
+    constructor(jsonOptions) {
 
         /**
          * This is the URL where the software is hosted
          * Do not add a trailing slash to this string
          */
-        this.wwwroot = 'http://localhost/tsugi';  /// For normal
-        // this.wwwroot = 'http://localhost:8888/tsugi';   // For MAMP
 
-        /**
+        this.wwwroot = 'http://localhost/tsugi';  /// For normal
+        //this.wwwroot = 'http://localhost:8888/tsugi';   // For MAMP
+
+        /*
          * Database connection information.
          */
-        this.dbhost       = '127.0.0.1';
-        this.dbname       = 'tsugi';
-        // this.dbport       = 3306;
-        this.dbport       = 8889; // MAMP
+
         /**
-         * The database user (encrypted)
+         * The host name, it could be an IP address or a name. By default: '127.0.0.1'
+         * @type {string}
+         */
+        this.dbhost       = '127.0.0.1';
+
+        /**
+         * The database name. By default: 'tsugi'
+         */
+        this.dbname       = 'tsugi';
+
+        /**
+         * The database port. By default: '8889'
+         */
+        this.dbport       = 3306;
+
+        /**
+         * The database user (encrypted).
+         * By default: 'ltiuser'
          * @type {string}
          */
         this._dbuser    = Crypto.encryptShortTerm('ltiuser');
+
         /**
-         * The database password (encrypted)
+         * The database password (encrypted).
+         * By default: 'ltipassword'
          * @type {string}
          */
         this._dbpass    = Crypto.encryptShortTerm('ltipassword');
@@ -52,6 +82,7 @@ class Config {
          * can make a separate database for each instance of TSUGI.
          * This allows you to host multiple instances of TSUGI in a
          * single database if your hosting choices are limited.
+         * By default: '' empty.
          */
         this.dbprefix  = '';
 
@@ -61,43 +92,53 @@ class Config {
          * If you check out a copy of the static content locally and do not
          * want to use the CDN copy (perhaps you are on a plane or are otherwise
          * not connected) change this configuration.
+         * By default: /tsugi-static
          */
-         this.staticroot = 'https://www.dr-chuck.net/tsugi-static';
-         // this.staticroot = this.wwwroot . "/../tsugi-static";
+        //this.staticroot = 'https://www.dr-chuck.net/tsugi-static';
+        this.staticroot = "/tsugi-static";
 
         /**
          * Where the bulk mail comes from - should be a real address with
-         * a wildcard box you check
+         * a wildcard box you check.
+         * By default: false
          */
         this.maildomain = false; // 'mail.example.com';
         /**
          * The mail secret (encrypted)
+         * By default: warning:please-change-mailsecret-92ds29
          * @type {string}
          */
-        this._mailsecret = Crypto.encryptShortTerm('warning:please-change-mailsecret-92ds29');
+        this._mailsecret = Crypto.encryptShortTerm('warning:please-change-mailsecret-xxxxxx');
+
         /**
          * Mail end of line - Depends on your mailer - may need to be \r\n
+         * By default: '\n'
          */
         this.maileol = "\n";  // Depends on your mailer
 
         /**
          * Set the nonce clearing check proability
+         * By default: 100
          */
         this.noncecheck = 100;
         /**
          * Set the nonce expiry time
+         * By default: 1800
          */
         this.noncetime = 1800;
 
         /**
          * This is used to make sure that our constructed session ids
          * based on resource_link_id, oauth_consumer_key, etc are not
-         * predictable or guessable.   Just make this a long random string.
-         * See LTIX::getCompositeKey() for detail on how this operates.
+         * predictable or guessable.
+         * By default: warning:please-change-sessionsalt-xxxx'
          */
-        this.sessionsalt = "warning:please-change-sessionsalt-89b543";
+        this.sessionsalt = "warning:please-change-sessionsalt-xxxxxx";
 
-        // Timezone
+        /**
+        * The desired timezone.
+        * By default: Pacific/Honolulu
+        */
         this.timezone = 'Pacific/Honolulu'; // Nice for due dates
 
         // Universal Analytics
@@ -117,10 +158,21 @@ class Config {
          * disconnected, various tools will not access network resources
          * like Google's map library and hang.  Also the Google login will
          * be faked.  Don't run this in production.
+         * By default: false.
          */
         this.OFFLINE = false;
 
+        /**
+         * Unit testing flag
+         * By default: false
+         */
         this.unitTesting = false;
+
+        this.LTI = require('tsugi-node-lti/lib/ims-lti');
+
+        //Update the properties with the custom paramenters
+        Object.assign (this, jsonOptions);
+
         this.pdox = new PDOX(this);
 
         // Check the tables (async - will fail later)
@@ -157,6 +209,22 @@ class Config {
      * @type {string}
      */
     get mailsecret() { return Crypto.decryptShortTerm(this._mailsecret); }
+
+    /**
+     * Returns the local directory where client libraries are. Only if the
+     * staticroot is not an CDN address
+     * @type string
+    */
+
+    get staticrootDir () {
+      if (this.staticroot.startsWith ('http') || this.staticroot.startsWith ('//')){
+        return null;
+      } else if (this.staticroot.startsWith('/')){
+        return __dirname + '/../../bower_components'
+      }
+      return null;
+    }
+
 }
 
 module.exports = Config;
