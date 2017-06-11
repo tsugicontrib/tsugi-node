@@ -274,6 +274,12 @@ class Tsugi {
         TsugiUtils.copy(o,"link_settings_url",i,"custom_link_settings_url");
         TsugiUtils.copy(o,"context_settings_url",i,"custom_context_settings_url");
 
+        // LTI 1.x / 2.x Service endpoints
+        TsugiUtils.copy(o,"ext_memberships_id",i,"ext_memberships_id");
+        TsugiUtils.copy(o,"ext_memberships_url",i,"ext_memberships_url");
+        TsugiUtils.copy(o,"lineitems_url",i,"lineitems_url","custom_lineitems_url");
+        TsugiUtils.copy(o,"memberships_url",i,"memberships_url", "custom_memberships_url");
+
         TsugiUtils.copy(o,"context_title",i,"context_title");
         TsugiUtils.copy(o,"link_title",i,"resource_link_title");
 
@@ -282,6 +288,8 @@ class Tsugi {
         if ( email == null ) email = TsugiUtils.toNull(i["custom_person_email_primary"]);
         if ( email == null ) email = TsugiUtils.toNull(i["custom_person_contact_email_primary"]);
         if ( email != null ) o["user_email"] = email;
+
+        TsugiUtils.copy(o,"user_image",i,"user_image", "custom_user_image");
 
        // Displayname from LTI 2.x
         if ( i["person_name_full"] != null ) {
@@ -345,8 +353,10 @@ class Tsugi {
             n.nonce,
             c.context_id, c.title AS context_title, context_sha256, c.settings AS context_settings,
             c.settings_url AS context_settings_url,
+            c.ext_memberships_id AS ext_memberships_id, c.ext_memberships_url AS ext_memberships_url,
+            c.lineitems_url AS lineitems_url, c.memberships_url AS memberships_url,
             l.link_id, l.title AS link_title, l.settings AS link_settings, l.settings_url AS link_settings_url,
-            u.user_id, u.displayname AS user_displayname, u.email AS user_email, user_key,
+            u.user_id, u.displayname AS user_displayname, u.email AS user_email, user_key, u.image AS user_image,
             u.subscribe AS subscribe, u.user_sha256 AS user_sha256,
             m.membership_id, m.role, m.role_override,
             r.result_id, r.grade, r.note AS result_comment, r.result_url, r.sourcedid
@@ -618,7 +628,9 @@ class Tsugi {
         function updateContext () {
           console.log("UPDATING CONTEXT");
 
-          if ( TsugiUtils.isset(post.context_title) && post.context_title != row.context_title ) {
+          if ( row.context_id != null &&
+                TsugiUtils.isset(post.context_title) && post.context_title != row.context_title ) {
+
               let sql = `UPDATE {p}lti_context SET title = :title WHERE context_id = :context_id`;
               let data = {
                   title: post.context_title,
@@ -631,10 +643,30 @@ class Tsugi {
           }
         };
 
+        function updateContextColumn (column) {
+          console.log("UPDATING CONTEXT "+column);
+
+          if ( row.context_id != null &&
+                TsugiUtils.isset(post[column]) && post[column] != row[column] ) {
+
+              let sql = `UPDATE {p}lti_context SET `+column+` = :value WHERE context_id = :context_id`;
+              let data = {
+                  value: post[column],
+                  context_id: row.context_id
+              };
+              return CFG.pdox.query(sql, data).then( function() {
+                  row[column] = post[column];
+                  actions.push( "=== Updated context="+row.context_id+" "+column+"="+post[column]);
+              });
+          }
+        };
+
         function updateLink () {
           console.log("UPDATING LINK");
 
-          if ( TsugiUtils.isset(post.link_title) && post.link_title != row.link_title ) {
+          if ( row.link_id != null &&
+               TsugiUtils.isset(post.link_title) && post.link_title != row.link_title ) {
+
               let sql = "UPDATE {p}lti_link SET title = :title WHERE link_id = :link_id";
               let data = {
                   title: post.link_title,
@@ -647,18 +679,20 @@ class Tsugi {
           }
         };
 
-        function updateUser() {
-          console.log("UPDATING USER");
+        function updateUser(fieldname) {
+          console.log("UPDATING USER "+fieldname);
 
-          if ( TsugiUtils.isset(post.user_displayname) && post.user_displayname != row.user_displayname && post.user_displayname.length > 0 ) {
-              let sql = "UPDATE {p}lti_user SET displayname = :displayname WHERE user_id = :user_id";
+          var post_name = "user_"+fieldname;
+          if ( row.user_id != null &&
+               TsugiUtils.isset(post[post_name]) && post[post_name] != row[fieldname] && post[post_name].length > 0 ) {
+              let sql = "UPDATE {p}lti_user SET "+fieldname+" = :value WHERE user_id = :user_id";
               let data = {
-                  displayname: post.user_displayname,
+                  value: post[post_name],
                   user_id: row.user_id
               };
               return CFG.pdox.query(sql, data).then( function() {
-                  row.user_displayname = post.user_displayname;
-                  actions.push( "=== Updated user="+row.user_id+" displayname="+post.user_displayname);
+                  row[fieldname] = post[post_name];
+                  actions.push( "=== Updated user="+row.user_id+" "+fieldname+"="+post[post_name]);
               });
           }
         };
@@ -708,8 +742,13 @@ class Tsugi {
         .then(postTweeks)
         .then(resultUpdate)
         .then(updateContext)
+        .then(updateContextColumn('ext_memberships_id'))
+        .then(updateContextColumn('ext_memberships_url'))
+        .then(updateContextColumn('lineitems_url'))
+        .then(updateContextColumn('memberships_url'))
         .then(updateLink)
-        .then(updateUser)
+        .then(updateUser('displayname'))
+        .then(updateUser('image'))
         .then(updateEmail)
         .then(updateRole)
         .then(function (){
