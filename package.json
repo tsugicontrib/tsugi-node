@@ -9,11 +9,12 @@
     "multer": "^1.1.0",
     "mysql": ">=1.0.0",
     "crypto-js" : ">=3.0.0"
-  },
+ },
   "description": "Tsugi Node Library",
   "main": "http.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall" : "bower install"
   },
   "repository": {
     "type": "git",

@@ -24,7 +24,7 @@ class Link {
   get id() { return this._id; }
   get title() { return this._title; }
   get result() { return this._result; }
-  get settigns() { return this._settings; }
+  get settings() { return this._settings; }
 
   set id(id) {this._id = id;}
   set title(title) {this._title = title;}

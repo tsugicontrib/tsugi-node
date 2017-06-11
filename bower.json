@@ -1,0 +1,30 @@
+{
+  "name": "tsugi-node",
+  "description": "Tsugi Node Library",
+  "main": "app.js",
+  "authors": [
+    "Charles R Severance"
+  ],
+  "license": "ISC",
+  "keywords": [
+    "tsugi",
+    "node",
+    "LTI"
+  ],
+  "homepage": "https://github.com/csev/tsugi-node",
+  "moduleType": [],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "*.swp",
+    "esdoc"
+  ],
+  "dependencies": {
+    "bootstrap": "3",
+    "components-font-awesome": "4"
+  }
+}

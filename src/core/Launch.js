@@ -61,34 +61,44 @@ class Launch {
           service
         );
 
-      //Creates the link object
-      this._link = new Link (row.link_id, row.link_title, this._result, new Settings());
+        //Creates the link object
+        this._link = new Link (row.link_id,
+          row.link_title,
+          this._result,
+          new Settings(this.CFG,
+            row.link_id,
+            row.link_settings_url,
+            row.link_settings,
+            'link',
+            this.req
+          )
+        );
 
-      //Creates the context object
-      this._context = new Context (row.context_id, row.context_title, new Settings());
+        //Creates the context object
+        this._context = new Context (row.context_id,
+          row.context_title,
+          new Settings(this.CFG,
+            row.context_id,
+            row.context_settings_url,
+            row.context_settings,
+            'context',
+            this.req
+          )
+        );
 
-      //Creates the user object
-      this._user = new User (
-          row.user_id,
-          TsugiUtils.toNull (row.user_email),
-          TsugiUtils.toNull (row.user_displayname),
-          parseInt (row.role,10)
-      );
+        //Creates the user object
+        this._user = new User (
+            row.user_id,
+            TsugiUtils.toNull (row.user_email),
+            TsugiUtils.toNull (row.user_displayname),
+            parseInt (row.role,10)
+        );
 
-      //Creates the key object
-      this._key = new Key (
-        row.key_id,
-        null
-      );
-
-      /*
-        console.log (` The objects:
-          ${util.inspect (this._user)}
-          ${util.inspect (this._context)}
-          ${util.inspect (this._link)}
-          ${util.inspect (this._key)}
-          `);
-      */
+        //Creates the key object
+        this._key = new Key (
+          row.key_id,
+          null
+        );
       }
     }
 
@@ -110,7 +120,7 @@ class Launch {
     /**
      * Get the Context associated with the launch.
      *
-     * @return {Context} the user
+     * @return {Context} the context
      */
     get context() { return this._context; }
 
@@ -118,6 +128,11 @@ class Launch {
      * Get the Link associated with the launch.
      */
     get link() { return this._link; }
+
+    /**
+     * Get the User associated with the launch.
+     */
+    get user() { return this._user; }
 
     /**
      * Get the Result associated with the launch.
@@ -130,19 +145,9 @@ class Launch {
     get service() { return this._service; }
 
     /**
-     * Return the database connection used by Tsugi.
+     * Return the Output helper class used by Tsugi.
      */
-    get connection() { return this; }
-
-    /**
-     * Return the database prefix used by Tsugi.
-     */
-    get prefix() { return 42; }
-
-    /**
-     * Return the database helper class used by Tsugi.
-     */
-    get output() { return 42; }
+    get output() { return new Output (this); }
 
     /**
      * Get the base string from the launch.
@@ -233,7 +238,7 @@ class Launch {
      * CDN for this application.
      * TODO: Define the property for this
      **/
-    get getStaticUrl() { return 42; }
+    get staticUrl() { return this.CFG.staticroot }
 
     /**
      * Get a URL to a system-wide spinner image
