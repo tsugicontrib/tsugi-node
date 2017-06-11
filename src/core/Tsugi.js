@@ -388,15 +388,32 @@ class Tsugi {
 
         if ( post["service"] != null ) {
             sql += `LEFT JOIN {p}lti_service AS s ON k.key_id = s.key_id AND s.service_sha256 = :service
-                   ` // :service 5
+                   `; // :service 5
 
             data.service = Crypto.sha256(post.service);
         }
 
-        sql += `WHERE k.key_sha256 = :key LIMIT 1
+        sql += `WHERE k.key_sha256 = :key
                `;  // :key 6 or 5
 
-        //console.log(sql);
+        // Handle deleted
+        sql += `AND COALESCE(k.deleted,0) = 0
+            AND COALESCE(c.deleted,0) = 0
+            AND COALESCE(l.deleted,0) = 0
+            AND COALESCE(u.deleted,0) = 0
+            AND COALESCE(m.deleted,0) = 0
+            AND COALESCE(r.deleted,0) = 0
+        `;
+
+        if ( post["service"] != null ) {
+            sql += `
+                AND COALESCE(s.deleted,0) = 0
+            `;
+        }
+
+        sql += ` LIMIT 1`;
+
+        // console.log(sql);
         // console.log(data);
 
         // Return a promise of a query.

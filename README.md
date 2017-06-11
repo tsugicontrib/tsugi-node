@@ -20,10 +20,13 @@ don't have it installed run
 
     npm install -g bower
 
-
 To run test code:
 
     mocha
+
+To run the test code on MAMP, do
+
+    export PORT=8889; mocha
 
 It is not a server - more of a simple straight line test.   You can
 also run [nodemon](https://www.npmjs.com/package/nodemon) if you want it

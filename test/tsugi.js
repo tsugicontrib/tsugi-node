@@ -5,7 +5,6 @@ var Tsugi = require('../src/core/Tsugi');
 var Launch = require('../src/core/Launch');
 var Settings = require('../src/core/Settings');
 
-
 Tsugi.unit_testing = true;
 var CFG = null;
 
@@ -92,7 +91,13 @@ function fakePost1s() {
 
 describe("Tsugi", function () {
     it("Should pass the constructor", function() {
-        CFG = new Config();
+        if ( process.env.PORT ) {
+            CFG = new Config({
+                dbport: process.env.PORT
+            });
+        } else {
+            CFG = new Config();
+        }
         CFG.unitTesting = true;
     });
 
