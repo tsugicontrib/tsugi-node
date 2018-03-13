@@ -37,3 +37,22 @@ To make the documentation install [ESDOC](http://esdoc.org) and run:
     esdoc -c esdoc.json
 
 And open `esdoc/index.html`
+
+Developer Testing New Versions of tsugi-node-lti
+------------------------------------------------
+
+If you want to work on `tsugi-node-lti` and test it here, check it
+our into a per folder and change `package.json` as follows:
+
+    "tsugi-node-lti": "../tsugi-node-lti",
+
+Then
+
+    rm -r node_modules
+    npm install
+
+Now the install should be from your own hard drive rather than
+npmjs.
+
+    
+
