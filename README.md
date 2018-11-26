@@ -1,6 +1,12 @@
 Tsugi Node Library
 ==================
 
+**Deprecated:** As of November 2018, this effort is deprecated.
+We are in the process of developing a new technology / apprach
+that will allow Tsugi tools to be built in a wide range of environments
+connected to the core of Tsugi using web services wather than through
+the database as is done in this approach.
+
 We are using NodeJS 6.0, ES6, and Express for the Node version of Tsugi.
 
 * [API Documentation](http://do1.dr-chuck.com/tsugi-node/esdoc/)
